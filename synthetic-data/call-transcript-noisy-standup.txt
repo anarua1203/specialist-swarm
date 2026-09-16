@@ -1,0 +1,32 @@
+[00:04] Maya Okafor: Morning. Can everyone hear
+[00:05] Leo Brandt: Yep.
+[00:05] Maya Okafor: me? Okay, quick one, we have fifteen minutes.
+[00:09] Tomas Reyes: Hey.
+[00:10] Maya Okafor: Leo, you first.
+[00:11] Leo Brandt: So the, uh, the ingestion job failed again last night. Same timeout. I think it's the
+[00:17] Maya Okafor: The S3
+[00:17] Leo Brandt: batch size.
+[00:18] Maya Okafor: thing?
+[00:18] Leo Brandt: Yeah. I'll drop it to five hundred and rerun today. Should be done by, like, noon.
+[00:24] Maya Okafor: Okay. Tomas?
+[00:26] Tomas Reyes: Uh, dashboard is, it's mostly there. I'm blocked on the, on the metrics API because the auth token expired and I don't have access to rotate it.
+[00:35] Maya Okafor: Who has access?
+[00:36] Tomas Reyes: I think Priyanka? Or Maya, you might.
+[00:39] Maya Okafor: I might. Let me, let me check after this. If I do I'll rotate it.
+[00:43] Tomas Reyes: Cool.
+[00:44] Leo Brandt: Also somebody should
+[00:45] Maya Okafor: Go
+[00:45] Leo Brandt: update the
+[00:46] Maya Okafor: ahead.
+[00:46] Leo Brandt: runbook. It still says the old bucket name.
+[00:50] Maya Okafor: Yeah. Yeah. Okay.
+[00:52] Tomas Reyes: The client demo is Thursday right?
+[00:54] Maya Okafor: Thursday at two. I'll, uh, I'll put together the demo script. Tomas, can you have the dashboard in staging by Wednesday end of day?
+[01:02] Tomas Reyes: If I get the token today, yes.
+[01:04] Maya Okafor: Okay. And I'll also write the weekly status email to the client, and I'll clean up the Jira board, there's like forty stale tickets.
+[01:12] Leo Brandt: I can close the ingestion ones, most of those are mine.
+[01:15] Maya Okafor: It's fine, I'll just do all of them.
+[01:18] Tomas Reyes: Oh and, uh, legal asked about the data retention clause. Did anyone reply?
+[01:22] Maya Okafor: Hm. No. We should, uh, we'll come back to that.
+[01:25] Leo Brandt: Okay.
+[01:26] Maya Okafor: Okay, that's it. Thanks all.

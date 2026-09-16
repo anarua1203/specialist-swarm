@@ -15,7 +15,11 @@ import json
 import os
 from pathlib import Path
 
+
 from anthropic import Anthropic
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 COORDINATOR_SYSTEM = """\
@@ -30,13 +34,17 @@ You can call these specialists:
 - Legal Reviewer: contract flags and counter-positions
 - Technical Fit Specialist: product capability fit
 - Competitive Intel Analyst: who else is in the deal and how to position
+- Calendar Intelligence Specialist: today's meeting briefing with grounded
+  preparation actions. Delegate to this specialist when you need context about
+  the user's schedule — pass the pre-fetched event data if it was provided in
+  the user message, or ask the user to run run_calendar_agent.py first.
 
 # How to run a deal
 
 1. Read the RFP yourself first. Note the customer, scope, and any obvious
    curveballs.
 
-2. Delegate to ALL FOUR specialists in parallel. Each gets:
+2. Delegate to ALL FOUR deal specialists in parallel. Each gets:
    - The full RFP text
    - A clear, narrow brief stating what you need from them
    - A deadline ("answer in one message, ~300 words")
@@ -85,6 +93,14 @@ def main() -> None:
         api_key=api_key,
         default_headers={"anthropic-beta": "managed-agents-2026-04-01"},
     )
+
+    # Include the calendar agent if it has been created
+    calendar_agent_id_path = Path(".calendar_agent_id")
+    if calendar_agent_id_path.exists():
+        calendar_id = calendar_agent_id_path.read_text().strip()
+        if calendar_id not in specialist_ids.values():
+            specialist_ids["calendar_intelligence"] = calendar_id
+            print(f"  Including Calendar Intelligence Specialist ({calendar_id})")
 
     coordinator = client.beta.agents.create(
         name="Deal Desk Senior Partner",
