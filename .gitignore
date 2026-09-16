@@ -1,11 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
 .env
+outputs/
+.pytest_cache/
+# Managed Agents IDs created per workspace
 .environment_id
-.coordinator_id
-.specialist_ids.json
+.orchestrator_id
+.subagent_ids.json
 .skill_ids.json
 .last_session_id
-outputs/
+.claude/logs/
+.coordinator_id
+.specialist_ids.json
 excalidraw.log
-.venv/
 .call_intel_agent_id
+# Real client transcript, keep local only
 synthetic-data/pkf-engine-3-daily-sync-transcript.txt
