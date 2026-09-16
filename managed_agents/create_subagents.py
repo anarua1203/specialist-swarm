@@ -6,8 +6,9 @@ Each sub-agent is built from the SAME class the local orchestrator uses
 prompt. The roster is therefore identical whether Regina runs locally or as a
 Managed Agents coordinator.
 
-The Email Agent follows the email-brief skill (skills/email-brief), which is
-uploaded and attached here. Point it at a live Outlook/Exchange MCP with
+The Email Agent follows the email-brief skill (skills/email-brief) and the
+News Agent the news-agent skill (skills/news-agent); both are uploaded and
+attached here. Point it at a live Outlook/Exchange MCP with
 EXCHANGE_MCP_URL (and EXCHANGE_MCP_TOKEN if it needs a bearer token); when
 unset it answers from the mock inbox embedded in its system prompt, so the
 default demo is unaffected.
@@ -25,8 +26,11 @@ from _common import SUBAGENT_IDS, client, config
 from anthropic.lib import files_from_dir
 from regina.subagents import ROSTER
 
-EMAIL_SKILL_DIR = config.ROOT / "skills" / "email-brief"
-EMAIL_SKILL_TITLE = "Email Brief"
+# key -> (skill directory, display name in the Skills API)
+AGENT_SKILLS = {
+    "email": (config.ROOT / "skills" / "email-brief", "Email Brief"),
+    "news": (config.ROOT / "skills" / "news-agent", "News Agent"),
+}
 
 
 def email_mcp_servers() -> list[dict]:
@@ -42,20 +46,20 @@ def email_mcp_servers() -> list[dict]:
     return [server]
 
 
-def upload_email_skill(api) -> str:
-    """Upload skills/email-brief once; reuse on re-runs (display names must be unique)."""
+def upload_skill(api, skill_dir, title: str) -> str:
+    """Upload a skill directory once; reuse on re-runs (display names must be unique)."""
     for skill in api.skills.list(source="custom"):
-        if skill.display_name == EMAIL_SKILL_TITLE:
-            print(f"  Reusing skill {EMAIL_SKILL_TITLE}: {skill.id}")
+        if skill.display_name == title:
+            print(f"  Reusing skill {title}: {skill.id}")
             return skill.id
-    skill = api.skills.create(display_name=EMAIL_SKILL_TITLE, files=files_from_dir(str(EMAIL_SKILL_DIR)))
-    print(f"  Uploaded skill {EMAIL_SKILL_TITLE}: {skill.id}")
+    skill = api.skills.create(display_name=title, files=files_from_dir(str(skill_dir)))
+    print(f"  Uploaded skill {title}: {skill.id}")
     return skill.id
 
 
 def main() -> None:
     api = client()
-    email_skill_id = upload_email_skill(api)
+    skill_ids = {key: upload_skill(api, path, title) for key, (path, title) in AGENT_SKILLS.items()}
     mcp_servers = email_mcp_servers()
     ids: dict[str, str] = {}
     for cls in ROSTER:
@@ -69,10 +73,12 @@ def main() -> None:
             tools=[{"type": "agent_toolset_20260401", "default_config": {"enabled": False}}],
             metadata={**config.MANAGED_AGENTS_METADATA, "role": cls.key},
         )
-        if cls.key == "email":
+        if cls.key in skill_ids:
             # The skill is attached via the Skills API, so keep it out of the prompt.
-            kwargs["skills"] = [{"type": "custom", "skill_id": email_skill_id, "version": "latest"}]
-            kwargs["system"] = agent_obj.system_prompt(live_mcp=bool(mcp_servers), include_skill=False)
+            kwargs["skills"] = [{"type": "custom", "skill_id": skill_ids[cls.key], "version": "latest"}]
+            prompt_kwargs = {"live_mcp": bool(mcp_servers)} if cls.key == "email" else {}
+            kwargs["system"] = agent_obj.system_prompt(include_skill=False, **prompt_kwargs)
+        if cls.key == "email":
             if mcp_servers:
                 # Live inbox: read mail through the MCP instead of the embedded fixture.
                 kwargs["mcp_servers"] = mcp_servers

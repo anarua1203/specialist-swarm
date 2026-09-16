@@ -11,10 +11,10 @@ work out in parallel, and synthesises one answer.
                        └───┬────────┬───────┬───┘
               parallel     │        │       │
                  ┌─────────▼─┐ ┌────▼─────┐ ┌▼──────────────────┐
-                 │Email Agent│ │ Calendar │ │ Anthropic News    │
-                 │ (inbox)   │ │  Agent   │ │ Agent             │
+                 │Email Agent│ │ Calendar │ │ News Agent        │
+                 │ (inbox)   │ │  Agent   │ │ (RSS, news-agent) │
                  └───────────┘ └──────────┘ └───────────────────┘
-                   mock_data/emails.json  calendar.json  anthropic_news.json
+                   mock_data/emails.json  calendar.json  skills/news-agent/fixtures
 ```
 
 The sub-agents are treated as **already built and working**: each is a black
@@ -53,12 +53,12 @@ profile exists, else `mock`. All knobs are in `.env.example`.
 ## What the demo looks like
 
 ```
-   0.00s  [fan-out ×3]      Email Agent, Calendar Agent, Anthropic News Agent
+   0.00s  [fan-out ×3]      Email Agent, Calendar Agent, News Agent
    0.00s  [delegate →]       Email Agent: "Give me an inbox digest: counts, every high-importance…"
    0.00s  [delegate →]       Calendar Agent: "Give me today's full schedule with any conflicts…"
-   0.00s  [delegate →]       Anthropic News Agent: "Top 3 Anthropic announcements from the last 7…"
+   0.00s  [delegate →]       News Agent: "Morning digest of AI news from the latest fetch, scored…"
    0.00s  [reply ←]          Calendar Agent (mock, 0 ms, 1180 chars)
-   0.00s  [reply ←]          Anthropic News Agent (mock, 0 ms, 1069 chars)
+   0.00s  [reply ←]          News Agent (mock, 0 ms, 3402 chars)
    0.00s  [reply ←]          Email Agent (mock, 0 ms, 1919 chars)
    0.00s  [synthesise]       Regina is writing the answer
 
@@ -105,10 +105,11 @@ regina/
     base.py              Subagent: brief -> report; mock and llm backends; tool + system prompt
     email_agent.py       Email Agent (follows the email-brief skill: 3 bullets, 3 actions, drafts only)
     calendar_agent.py    Calendar Agent (conflicts, free slots, deadlines)
-    news_agent.py        Anthropic News Agent
-mock_data/               synthetic inbox, calendar, news (relative dates, always "fresh")
+    news_agent.py        News Agent (follows the news-agent skill: dedup, tier, relevance, score, JSON only)
+mock_data/               synthetic inbox and calendar (relative dates, always "fresh")
 skills/regina-briefing/  SKILL.md — the briefing format, shared by local and Managed Agents
 skills/email-brief/      SKILL.md — the Email Agent's triage rubric, output contract, drafts-only guardrails
+skills/news-agent/       SKILL.md + fetch.py + sources/profile/brief.yaml + fixtures/snapshot.json — the News Agent's package
 managed_agents/          create_subagents / create_orchestrator / setup_environment / run_regina
 regina_briefing.py       CLI: morning briefing
 regina_chat.py           CLI: interactive chat
@@ -151,6 +152,34 @@ export EXCHANGE_MCP_URL="https://<your-exchange-mcp>/mcp"
 export EXCHANGE_MCP_TOKEN="..."        # only if the MCP needs a bearer token
 python managed_agents/create_subagents.py
 ```
+
+## News Agent and the `news-agent` skill
+
+The News Agent follows [`skills/news-agent/SKILL.md`](skills/news-agent/SKILL.md)
+(see its [README](skills/news-agent/README.md)): fetch RSS from lab blogs, arXiv,
+trade press and policy feeds, then **Dedup → Tier (T1/T2, T3 dropped) → Relevance**
+against `profile.yaml` (direct / adjacent / domain) **→ Score** with the
+`brief.yaml` weights **→ Select** by verbosity preset (`morning`, `meeting_prep`,
+`slack_reply`). It returns **structured JSON only**; Regina writes the prose.
+Hard rules: every item carries a URL from the fetch, nothing from background
+knowledge, never guess an event date, never pad (`quiet_period: true` instead).
+
+- Mock backend: the pipeline applied deterministically to the skill's saved
+  fetch, `skills/news-agent/fixtures/snapshot.json`. Recency is measured from
+  the newest item in the fetch, so the demo is reproducible offline.
+- `REGINA_NEWS_LIVE=1`: the mock runs the skill's own `fetch.py` for a live
+  RSS fetch (needs `feedparser` and network). Refresh the fixture with
+  `python skills/news-agent/fetch.py --save-fixture`.
+- `llm` backend: Claude gets the skill, `profile.yaml`, `brief.yaml` and the
+  fetch output in its prompt and does the judgement calls (event clustering,
+  tiering, rewritten headlines) itself.
+- Managed Agents: `create_subagents.py` uploads and attaches the skill package
+  to the News Agent, the same way it attaches Email Brief to the Email Agent.
+- Query mode: "everything about OpenAI" returns all qualifying items from the
+  last 30 days without the preset caps.
+
+Edit `profile.yaml` (role, employer, stack, watchlist) and `sources.yaml`
+(feeds) to make it yours; `brief.yaml` holds the weights and length caps.
 
 ## Extending the roster
 

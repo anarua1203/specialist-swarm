@@ -1,0 +1,58 @@
+# --- Who is the user? Edit these fields. ---
+
+role: "Consulting Manager"
+employer: "Prompt Queens LLC"
+industry: "AI consulting"
+
+tech_stack:
+  - Python
+  - AWS
+  - Azure
+  - Claude API / Anthropic
+  - prompt engineering
+  - AI strategy & implementation
+
+watchlist:
+  orgs:
+    - Anthropic
+    - OpenAI
+    - Google DeepMind
+    - Meta AI (FAIR)
+    - Microsoft
+    - Apple
+    - Amazon Web Services (AWS)
+    - Google Cloud
+    - Oracle Cloud
+    - IBM
+  people:
+    - Dario Amodei
+    - Daniela Amodei
+    - Tom Brown
+    - Chris Olah
+    - Sam McCandlish
+    - Jack Clark
+    - Jared Kaplan
+    - Sam Altman
+    - Demis Hassabis
+  models:
+    - Claude
+    - GPT
+    - Gemini
+    - Llama
+    - Mistral
+  topics:
+    - AI safety
+    - AI regulation
+    - AI agents
+    - MCP (Model Context Protocol)
+    - prompt engineering
+    - AI strategy
+    - AI implementation
+    - RAG
+    - fine-tuning
+    - enterprise AI adoption
+    - AI governance
+    - AI ROI / cost optimization
+    - responsible AI
+    - AI workforce impact
+    - Claude Code
