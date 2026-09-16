@@ -1,0 +1,86 @@
+{
+  "_note": "SYNTHETIC news feed for the Prompt Queens hackathon demo. Headlines and URLs are illustrative placeholders, not real announcements. published_days_ago is relative to today.",
+  "source": "Anthropic news (mock)",
+  "items": [
+    {
+      "id": "news-001",
+      "title": "Claude Fable 5.1 is now generally available",
+      "published_days_ago": 1,
+      "category": "models",
+      "url": "https://example.com/anthropic-news/claude-fable-5-1-ga",
+      "summary": "Anthropic's most capable widely released model moves to general availability with a 1M context window, always-on adaptive thinking, and effort controls from low to max.",
+      "why_it_matters": "If your orchestrator needs deeper reasoning for synthesis, this is the model to put on the coordinator seat.",
+      "tags": ["fable", "models", "release", "reasoning"]
+    },
+    {
+      "id": "news-002",
+      "title": "Managed Agents: multi-agent orchestration expands to all Console workspaces",
+      "published_days_ago": 2,
+      "category": "platform",
+      "url": "https://example.com/anthropic-news/managed-agents-multiagent-expansion",
+      "summary": "Coordinator agents can now roster up to 20 sub-agents, spawn multiple copies of each, and delegate in parallel threads inside a single session.",
+      "why_it_matters": "This is the exact pattern Regina uses: one coordinator, a roster of specialists, parallel fan-out.",
+      "tags": ["managed-agents", "multi-agent", "orchestration", "platform"]
+    },
+    {
+      "id": "news-003",
+      "title": "Agent Skills marketplace opens to enterprise customers",
+      "published_days_ago": 3,
+      "category": "platform",
+      "url": "https://example.com/anthropic-news/agent-skills-marketplace",
+      "summary": "Organizations can publish and share custom Skills (SKILL.md bundles) across workspaces, with versioning and access controls.",
+      "why_it_matters": "Your briefing-format skill could be shared with the whole team instead of copied per agent.",
+      "tags": ["skills", "platform", "enterprise"]
+    },
+    {
+      "id": "news-004",
+      "title": "Claude Code adds scheduled routines and background agents",
+      "published_days_ago": 4,
+      "category": "developer-tools",
+      "url": "https://example.com/anthropic-news/claude-code-routines",
+      "summary": "Developers can schedule cloud agents on a cron cadence and run long tasks in the background with notifications on completion.",
+      "why_it_matters": "A morning briefing is a natural scheduled routine.",
+      "tags": ["claude-code", "routines", "scheduling", "developer-tools"]
+    },
+    {
+      "id": "news-005",
+      "title": "Server-side refusal fallbacks reach general availability",
+      "published_days_ago": 5,
+      "category": "api",
+      "url": "https://example.com/anthropic-news/server-side-fallbacks-ga",
+      "summary": "Requests that hit a safety refusal on a frontier model can automatically re-run on a fallback model within the same API call.",
+      "why_it_matters": "Improves reliability for autonomous agents that must always return something.",
+      "tags": ["api", "reliability", "fallbacks"]
+    },
+    {
+      "id": "news-006",
+      "title": "Claude in Chrome available to all Max and Team subscribers",
+      "published_days_ago": 6,
+      "category": "products",
+      "url": "https://example.com/anthropic-news/claude-in-chrome-rollout",
+      "summary": "The browser agent leaves preview, adding site-level permissions and form-filling improvements.",
+      "why_it_matters": "A browsing subagent could join Regina's roster next.",
+      "tags": ["chrome", "browser", "products"]
+    },
+    {
+      "id": "news-007",
+      "title": "Research: measuring delegation quality in coordinator-subagent systems",
+      "published_days_ago": 9,
+      "category": "research",
+      "url": "https://example.com/anthropic-news/delegation-quality-research",
+      "summary": "A study of how brief clarity, report format, and parallelism affect multi-agent task success, with prompt recommendations for coordinators.",
+      "why_it_matters": "Directly applicable to how Regina writes briefs for her subagents.",
+      "tags": ["research", "multi-agent", "prompting"]
+    },
+    {
+      "id": "news-008",
+      "title": "Prompt caching adds 1-hour TTL by default on Opus-tier models",
+      "published_days_ago": 12,
+      "category": "api",
+      "url": "https://example.com/anthropic-news/prompt-caching-1h-default",
+      "summary": "Cached prefixes on Opus-tier models now persist for an hour, cutting costs for agents that re-send stable system prompts.",
+      "why_it_matters": "Keep Regina's system prompt stable and put the date after the cache breakpoint.",
+      "tags": ["api", "caching", "cost"]
+    }
+  ]
+}
