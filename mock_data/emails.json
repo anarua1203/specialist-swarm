@@ -1,5 +1,5 @@
 {
-  "_note": "Synthetic inbox for the Prompt Queens hackathon demo. Times are relative to 'now' so the demo always looks fresh.",
+  "_note": "Synthetic inbox for the Prompt Queens hackathon demo. Times are relative to 'now' so the demo always looks fresh. Signal fields (addressed/flagged/focused/conversation_id) mirror the email-brief skill's triage rubric.",
   "mailbox_owner": "you",
   "emails": [
     {
@@ -17,7 +17,11 @@
         "northwind",
         "sales"
       ],
-      "draft_reply": "Hi Priya — confirmed. You'll have the revised SOW with the phased pricing option by Wednesday EOD, ahead of Thursday's steering committee."
+      "draft_reply": "Hi Priya — confirmed. You'll have the revised SOW with the phased pricing option by Wednesday EOD, ahead of Thursday's steering committee.",
+      "addressed": "to",
+      "flagged": true,
+      "focused": true,
+      "conversation_id": "conv-northwind-sow"
     },
     {
       "id": "em-002",
@@ -33,7 +37,11 @@
         "manager",
         "scheduling"
       ],
-      "draft_reply": "3pm works — I've moved our 1:1. See you then."
+      "draft_reply": "3pm works — I've moved our 1:1. See you then.",
+      "addressed": "to",
+      "flagged": false,
+      "focused": true,
+      "conversation_id": "conv-1on1-marcus"
     },
     {
       "id": "em-003",
@@ -50,7 +58,11 @@
         "hackathon",
         "prompt-queens"
       ],
-      "draft_reply": "On it — I'll leave comments on section 3 before 2pm so the diagram matches the orchestrator we're demoing."
+      "draft_reply": "On it — I'll leave comments on section 3 before 2pm so the diagram matches the orchestrator we're demoing.",
+      "addressed": "to",
+      "flagged": false,
+      "focused": true,
+      "conversation_id": "conv-pitch-deck"
     },
     {
       "id": "em-004",
@@ -65,7 +77,11 @@
       "labels": [
         "hackathon",
         "logistics"
-      ]
+      ],
+      "addressed": "to",
+      "flagged": false,
+      "focused": true,
+      "conversation_id": "conv-hackathon-demo"
     },
     {
       "id": "em-005",
@@ -80,7 +96,11 @@
       "labels": [
         "platform",
         "notifications"
-      ]
+      ],
+      "addressed": "to",
+      "flagged": false,
+      "focused": true,
+      "conversation_id": "conv-platform-access"
     },
     {
       "id": "em-006",
@@ -95,7 +115,11 @@
       "labels": [
         "github",
         "code-review"
-      ]
+      ],
+      "addressed": "cc",
+      "flagged": false,
+      "focused": false,
+      "conversation_id": "conv-pr-12"
     },
     {
       "id": "em-007",
@@ -112,7 +136,11 @@
         "acme",
         "renewal"
       ],
-      "draft_reply": "Hi Dana — (1) yes, Enterprise includes the new agent features; (2) net-45 is doable for the renewal. Let's cover both on tomorrow's 3pm call."
+      "draft_reply": "Hi Dana — (1) yes, Enterprise includes the new agent features; (2) net-45 is doable for the renewal. Let's cover both on tomorrow's 3pm call.",
+      "addressed": "to",
+      "flagged": true,
+      "focused": true,
+      "conversation_id": "conv-acme-renewal"
     },
     {
       "id": "em-008",
@@ -127,7 +155,11 @@
       "labels": [
         "admin",
         "deadline"
-      ]
+      ],
+      "addressed": "cc",
+      "flagged": false,
+      "focused": false,
+      "conversation_id": "conv-expenses"
     },
     {
       "id": "em-009",
@@ -141,7 +173,11 @@
       "importance": "low",
       "labels": [
         "newsletter"
-      ]
+      ],
+      "addressed": "cc",
+      "flagged": false,
+      "focused": false,
+      "conversation_id": "conv-newsletter"
     },
     {
       "id": "em-010",
@@ -155,7 +191,11 @@
       "importance": "low",
       "labels": [
         "personal"
-      ]
+      ],
+      "addressed": "to",
+      "flagged": false,
+      "focused": false,
+      "conversation_id": "conv-dentist"
     }
   ]
 }

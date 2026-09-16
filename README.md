@@ -103,11 +103,12 @@ regina/
   trace.py               terminal trace of delegations
   subagents/
     base.py              Subagent: brief -> report; mock and llm backends; tool + system prompt
-    email_agent.py       Email Agent
+    email_agent.py       Email Agent (follows the email-brief skill: 3 bullets, 3 actions, drafts only)
     calendar_agent.py    Calendar Agent (conflicts, free slots, deadlines)
     news_agent.py        Anthropic News Agent
 mock_data/               synthetic inbox, calendar, news (relative dates, always "fresh")
 skills/regina-briefing/  SKILL.md — the briefing format, shared by local and Managed Agents
+skills/email-brief/      SKILL.md — the Email Agent's triage rubric, output contract, drafts-only guardrails
 managed_agents/          create_subagents / create_orchestrator / setup_environment / run_regina
 regina_briefing.py       CLI: morning briefing
 regina_chat.py           CLI: interactive chat
@@ -128,6 +129,28 @@ python managed_agents/run_regina.py            # stream the session; thread_crea
 ```
 
 Needs a workspace with the multi-agent research preview enabled.
+
+## Email Agent and the `email-brief` skill
+
+The Email Agent follows [`skills/email-brief/SKILL.md`](skills/email-brief/SKILL.md)
+(by Élise Sauvé): triage from metadata, collapse by conversation, **exactly 3
+summary bullets**, the **3 most important actions** ranked by hard deadline,
+who is blocked on you, sender seniority, then explicit ask, and **drafts only,
+never send**. It returns the skill's JSON contract plus a markdown briefing.
+
+- Mock and `llm` backends apply the rubric to `mock_data/emails.json`, whose
+  `addressed` / `flagged` / `focused` / `conversation_id` fields mirror the
+  Outlook signals the skill scores on.
+- Managed Agents: `create_subagents.py` uploads and attaches the skill. Set
+  `EXCHANGE_MCP_URL` (and `EXCHANGE_MCP_TOKEN` if needed) before running it
+  and the Email Agent reads a live Outlook/Exchange mailbox through the MCP
+  instead of the fixture. A Gmail MCP can be swapped in without touching the skill.
+
+```bash
+export EXCHANGE_MCP_URL="https://<your-exchange-mcp>/mcp"
+export EXCHANGE_MCP_TOKEN="..."        # only if the MCP needs a bearer token
+python managed_agents/create_subagents.py
+```
 
 ## Extending the roster
 

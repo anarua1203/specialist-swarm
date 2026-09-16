@@ -96,12 +96,16 @@ class CalendarAgent(Subagent):
                 return "**Calendar Agent** — nothing else scheduled.", {"next": None}
             return f"**Calendar Agent** — next up: {self._render_event(e, base)}", {"next": e}
 
-        if re.search(r"\bconflicts?\b|\boverlap", low) and not re.search(r"\bschedule\b|\bagenda\b", low):
+        wants_agenda = re.search(r"\bschedule\b|\bagenda\b|\bcalendar\b|what(?:'s| is) on|\bevents\b|\bmeetings\b|\btimeline\b", low)
+        if re.search(r"\btoday\b", low) and re.search(r"\btomorrow\b", low):
+            return self._render_range(range(0, 2), base)
+
+        if re.search(r"\bconflicts?\b|\boverlap", low) and not wants_agenda:
             offset = 1 if "tomorrow" in low else 0
             conflicts = self.conflicts_on(offset)
             return self._render_conflicts(conflicts, offset, base), {"conflicts": conflicts}
 
-        if re.search(r"\bfree\b|\bslot|\bavailab|\bfocus block", low) and not re.search(r"\bschedule\b|\bagenda\b", low):
+        if re.search(r"\bfree\b|\bslot|\bavailab|\bfocus block", low) and not wants_agenda:
             offset = 1 if "tomorrow" in low else 0
             slots = self.free_slots(offset)
             label = self._day_label(offset, base)

@@ -1,13 +1,31 @@
 from regina.subagents import build_roster
 
 
-def test_email_digest_counts_and_drafts():
+def test_email_inbox_brief_follows_the_skill_contract():
     email = build_roster()["email"]
     reply = email.run("inbox digest")
-    assert reply.data["counts"]["total"] == 10
-    assert reply.data["counts"]["needs_reply"] == 4
-    assert "Priya Natarajan" in reply.text
-    assert "Draft reply" in reply.text
+    brief = reply.data["brief"]
+    assert reply.data["counts"] == {"total": 10, "unread": 6, "needs_reply": 4, "high_importance": 4}
+    assert len(brief["summary_bullets"]) == 3
+    assert [a["rank"] for a in brief["priority_actions"]] == [1, 2, 3]
+    assert [a["source_email_id"] for a in brief["priority_actions"]] == ["em-003", "em-001", "em-007"]
+    assert all(a["draft_id"] and a["draft_id"] == f"draft-{a['source_email_id']}" for a in brief["priority_actions"])
+    assert {d["draft_id"] for d in brief["drafts_created"]} == {"draft-em-003", "draft-em-001", "draft-em-007"}
+    assert brief["drafts_created"][1]["subject"].startswith("RE: Proposal")  # no "RE: Re:"
+    assert brief["window"] == {"since_hours": 24, "includes_unresolved": True}
+    assert any("nothing was sent" in n for n in brief["notes"])
+    assert "```json" in reply.text and "Drafts created (not sent)" in reply.text
+
+
+def test_email_triage_tiers_from_metadata():
+    email = build_roster()["email"]
+    tiers = {t["id"]: t["tier"] for t in email.triage()}
+    assert tiers["em-001"] == "A"  # flagged
+    assert tiers["em-007"] == "A"  # flagged, high, to-me
+    assert tiers["em-002"] == "A"  # unread + focused + to-me + ask
+    assert tiers["em-006"] == "C"  # cc-only notification, read
+    assert tiers["em-009"] == "B"  # unread newsletter, cc
+    assert tiers["em-010"] == "C"
 
 
 def test_email_filters_by_sender_and_reply():
@@ -38,6 +56,14 @@ def test_calendar_tomorrow_and_week():
     assert len(week.data["events"]) == 12
 
 
+def test_calendar_today_and_tomorrow_with_conflicts_mentioned_returns_both_days():
+    cal = build_roster()["calendar"]
+    reply = cal.run("What is on the user's calendar for today and tomorrow, flagging any conflicts?")
+    ids = {e["id"] for e in reply.data["events"]}
+    assert {"cal-001", "cal-004", "cal-008", "cal-009"} <= ids
+    assert "CONFLICT" in reply.text
+
+
 def test_calendar_next_meeting_is_after_pinned_now():
     cal = build_roster()["calendar"]
     reply = cal.run("what's my next meeting?")
@@ -64,7 +90,11 @@ def test_tool_definitions_are_strict_and_unique():
         assert t["input_schema"]["required"] == ["brief"]
 
 
-def test_system_prompt_embeds_fixture():
+def test_system_prompt_embeds_fixture_or_points_at_mcp():
     roster = build_roster()
-    assert '"em-001"' in roster["email"].system_prompt()
+    email = roster["email"]
+    assert '"em-001"' in email.system_prompt()
+    assert "EXACTLY 3 bullets" in email.system_prompt()  # the skill is in the prompt
+    live = email.system_prompt(live_mcp=True)
+    assert '"em-001"' not in live and "list-mail-folder-messages" in live
     assert "2026-09-16" in roster["calendar"].system_prompt()
