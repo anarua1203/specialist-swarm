@@ -6,8 +6,11 @@ events stream to the browser as Server-Sent Events while the sub-agents work,
 so the audience sees the fan-out, then the synthesised answer.
 
 Standard library only; no extra dependencies. Single-user by design.
+Set REGINA_WEB_PASSWORD to require a password (HTTP Basic auth, any username)
+before exposing it beyond localhost. See DEPLOY.md.
 
 Endpoints:
+    GET  /healthz          200 "ok", never password-protected (load balancer checks)
     GET  /                 the page (web/index.html)
     GET  /api/info         {name, user, mode, today, roster, suggestions}
     GET  /api/ask?q=...    SSE: trace events, then {"kind": "answer", "text": ...}
@@ -18,12 +21,16 @@ Usage:
     python regina_web.py                 # auto: live if credentials exist, else mock
     python regina_web.py --mock          # offline demo
     python regina_web.py --live --port 8080
+    PORT=8080 REGINA_WEB_HOST=0.0.0.0 python regina_web.py   # container / PaaS style
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
+import hmac
 import json
+import os
 import queue
 import threading
 import time
@@ -98,11 +105,15 @@ class ReginaSession:
             self.regina.reset()
 
 
-def make_handler(session: ReginaSession) -> type[BaseHTTPRequestHandler]:
+def make_handler(session: ReginaSession, password: str | None = None) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
             url = urlparse(self.path)
-            if url.path == "/":
+            if url.path == "/healthz":
+                self._send(HTTPStatus.OK, b"ok", "text/plain")
+            elif not self._authorized():
+                self._send_unauthorized()
+            elif url.path == "/":
                 self._send(HTTPStatus.OK, INDEX_HTML.read_bytes(), "text/html; charset=utf-8")
             elif url.path == "/api/info":
                 self._send_json(session.info())
@@ -118,11 +129,34 @@ def make_handler(session: ReginaSession) -> type[BaseHTTPRequestHandler]:
                 self._send_json({"error": "Not found"}, HTTPStatus.NOT_FOUND)
 
         def do_POST(self) -> None:  # noqa: N802
-            if urlparse(self.path).path == "/api/reset":
+            if not self._authorized():
+                self._send_unauthorized()
+            elif urlparse(self.path).path == "/api/reset":
                 session.reset()
                 self._send_json({"ok": True})
             else:
                 self._send_json({"error": "Not found"}, HTTPStatus.NOT_FOUND)
+
+        # ---- auth --------------------------------------------------------------
+
+        def _authorized(self) -> bool:
+            """No password configured = open. Otherwise Basic auth; the username is ignored."""
+            if not password:
+                return True
+            header = self.headers.get("Authorization", "")
+            if not header.startswith("Basic "):
+                return False
+            try:
+                _, _, given = base64.b64decode(header[6:]).decode().partition(":")
+            except ValueError:
+                return False
+            return hmac.compare_digest(given.encode(), password.encode())
+
+        def _send_unauthorized(self) -> None:
+            self.send_response(HTTPStatus.UNAUTHORIZED)
+            self.send_header("WWW-Authenticate", 'Basic realm="Regina", charset="UTF-8"')
+            self.send_header("Content-Length", "0")
+            self.end_headers()
 
         # ---- response helpers ------------------------------------------------
 
@@ -140,6 +174,7 @@ def make_handler(session: ReginaSession) -> type[BaseHTTPRequestHandler]:
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-cache")
+            self.send_header("X-Accel-Buffering", "no")  # stop nginx-style proxies buffering the stream
             self.send_header("Connection", "close")
             self.end_headers()
             try:
@@ -158,8 +193,10 @@ def make_handler(session: ReginaSession) -> type[BaseHTTPRequestHandler]:
     return Handler
 
 
-def build_server(regina: Regina, host: str = "127.0.0.1", port: int = 8000) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_handler(ReginaSession(regina)))
+def build_server(
+    regina: Regina, host: str = "127.0.0.1", port: int = 8000, password: str | None = None
+) -> ThreadingHTTPServer:
+    return ThreadingHTTPServer((host, port), make_handler(ReginaSession(regina), password))
 
 
 def main() -> None:
@@ -167,14 +204,21 @@ def main() -> None:
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--mock", action="store_true", help="offline mode, no API calls")
     group.add_argument("--live", action="store_true", help="Claude API mode")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--host", default=os.environ.get("REGINA_WEB_HOST", "127.0.0.1"),
+                        help="bind address; 0.0.0.0 inside containers (env: REGINA_WEB_HOST)")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")),
+                        help="listen port (env: PORT, as set by most PaaS hosts)")
     args = parser.parse_args()
 
     mode = "mock" if args.mock else "live" if args.live else None
     regina = Regina(mode=mode)
-    server = build_server(regina, args.host, args.port)
-    print(f"👑 {regina.name} web UI ({regina.mode} mode) → http://{args.host}:{args.port}")
+    password = os.environ.get("REGINA_WEB_PASSWORD") or None
+    server = build_server(regina, args.host, args.port, password)
+    print(f"👑 {regina.name} web UI ({regina.mode} mode, "
+          f"{'password required' if password else 'no password'}) → http://{args.host}:{args.port}", flush=True)
+    if not password and args.host not in {"127.0.0.1", "localhost", "::1"}:
+        print("⚠  Listening beyond localhost without REGINA_WEB_PASSWORD: anyone who can reach this "
+              "port can use it" + (" and spend your API credits." if regina.mode == "live" else "."), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

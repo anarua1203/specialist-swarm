@@ -1,0 +1,13 @@
+.git
+.venv
+.env
+.claude
+__pycache__
+*.pyc
+.pytest_cache
+outputs
+examples
+tests
+managed_agents
+*.log
+.playwright-mcp

@@ -2,6 +2,7 @@
 
 import json
 import threading
+import urllib.error
 import urllib.request
 from urllib.parse import quote
 
@@ -58,3 +59,41 @@ def test_briefing_fans_out_to_all_three(base_url):
 def test_index_page_is_served(base_url):
     with urllib.request.urlopen(f"{base_url}/", timeout=10) as resp:
         assert "Regina" in resp.read().decode()
+
+
+# ---- deployment: optional password and health check ---------------------------
+
+
+@pytest.fixture
+def locked_url():
+    server = build_server(Regina(mode="mock"), host="127.0.0.1", port=0, password="s3cret")
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_address[1]}"
+    server.shutdown()
+    server.server_close()
+
+
+def basic_auth(password):
+    import base64
+
+    return {"Authorization": "Basic " + base64.b64encode(f"demo:{password}".encode()).decode()}
+
+
+def status_of(url, headers=None):
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers or {}), timeout=10) as resp:
+            return resp.status
+    except urllib.error.HTTPError as err:
+        return err.code
+
+
+def test_password_protects_every_page(locked_url):
+    assert status_of(f"{locked_url}/") == 401
+    assert status_of(f"{locked_url}/api/info") == 401
+    assert status_of(f"{locked_url}/api/info", basic_auth("wrong")) == 401
+    assert status_of(f"{locked_url}/api/info", basic_auth("s3cret")) == 200
+
+
+def test_health_check_is_open_even_with_a_password(locked_url):
+    assert status_of(f"{locked_url}/healthz") == 200
