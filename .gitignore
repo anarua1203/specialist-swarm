@@ -11,3 +11,9 @@ outputs/
 .skill_ids.json
 .last_session_id
 .claude/logs/
+.coordinator_id
+.specialist_ids.json
+excalidraw.log
+.call_intel_agent_id
+# Real client transcript, keep local only
+synthetic-data/pkf-engine-3-daily-sync-transcript.txt
