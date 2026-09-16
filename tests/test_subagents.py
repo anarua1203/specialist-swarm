@@ -24,8 +24,18 @@ def test_email_triage_tiers_from_metadata():
     assert tiers["em-007"] == "A"  # flagged, high, to-me
     assert tiers["em-002"] == "A"  # unread + focused + to-me + ask
     assert tiers["em-006"] == "C"  # cc-only notification, read
-    assert tiers["em-009"] == "B"  # unread newsletter, cc
+    assert tiers["em-009"] == "C"  # newsletter: bulk sender is Tier C even when unread
     assert tiers["em-010"] == "C"
+
+
+def test_email_brief_generated_at_is_real_utc():
+    from datetime import datetime, timezone
+    from regina import config
+
+    email = build_roster()["email"]
+    stamp = email.run("inbox digest").data["brief"]["generated_at"]
+    parsed = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    assert parsed == config.now().astimezone(timezone.utc).replace(microsecond=0)
 
 
 def test_email_filters_by_sender_and_reply():
@@ -64,6 +74,12 @@ def test_calendar_today_and_tomorrow_with_conflicts_mentioned_returns_both_days(
     assert "CONFLICT" in reply.text
 
 
+def test_calendar_conflicts_question_mentioning_meetings_stays_conflicts_view():
+    cal = build_roster()["calendar"]
+    reply = cal.run("Any conflicts in my meetings today?")
+    assert "conflicts" in reply.data and "events" not in reply.data
+
+
 def test_calendar_next_meeting_is_after_pinned_now():
     cal = build_roster()["calendar"]
     reply = cal.run("what's my next meeting?")
@@ -94,7 +110,9 @@ def test_system_prompt_embeds_fixture_or_points_at_mcp():
     roster = build_roster()
     email = roster["email"]
     assert '"em-001"' in email.system_prompt()
-    assert "EXACTLY 3 bullets" in email.system_prompt()  # the skill is in the prompt
+    assert "## Output contract" in email.system_prompt()  # the skill body is in the prompt
     live = email.system_prompt(live_mcp=True)
     assert '"em-001"' not in live and "list-mail-folder-messages" in live
+    attached = email.system_prompt(include_skill=False)  # Managed Agents: skill attached, not inlined
+    assert "## Output contract" not in attached and '"em-001"' in attached
     assert "2026-09-16" in roster["calendar"].system_prompt()

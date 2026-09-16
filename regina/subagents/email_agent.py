@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import timedelta, timezone
+from datetime import timezone
 from typing import Any
 
 from .. import config
@@ -25,10 +25,18 @@ from .base import Subagent, humanize_minutes, keywords
 
 IMPORTANCE_RANK = {"high": 0, "medium": 1, "low": 2}
 VIP_LABELS = {"client", "manager", "hackathon"}
+# Tunables from the skill's "Tuning" section. Extend URGENCY_PHRASES / BULK_SENDERS
+# per user or org; weekday names are generated so no fixture-specific day is baked in.
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+URGENCY_PHRASES = ("eod", "end of day", "today", "tomorrow", "tonight", *WEEKDAYS)
 URGENCY_KEYWORDS = re.compile(
-    r"\b(by (?:eod|end of day|thursday|friday|monday|tomorrow|\d{1,2}(?::\d{2})?\s?(?:am|pm)))\b|\bdue\b|\bdeadline\b|\bbefore (?:then|friday|thursday)\b|\basap\b",
+    r"\b(?:by|before|until|no later than) (?:"
+    + "|".join(re.escape(x) for x in URGENCY_PHRASES)
+    + r"|then|\d{1,2}(?::\d{2})?\s?(?:am|pm))\b|\bdue\b|\bdeadline\b|\basap\b",
     re.IGNORECASE,
 )
+BULK_LABELS = {"newsletter"}
+BULK_SENDERS = re.compile(r"^(?:no-?reply|do-?not-?reply|notifications?|newsletter)@", re.IGNORECASE)
 ASK_KEYWORDS = re.compile(r"\bcan you\b|\bcould you\b|\bplease\b|\bconfirm\b|\bapprove\b|\?", re.IGNORECASE)
 READ_CAP = 15
 WINDOW_HOURS = 24
@@ -63,9 +71,11 @@ class EmailAgent(Subagent):
 
     # ---- prompts --------------------------------------------------------------
 
-    def system_prompt(self, live_mcp: bool = False) -> str:
+    def system_prompt(self, live_mcp: bool = False, include_skill: bool = True) -> str:
         """Persona + the email-brief skill. With live_mcp the agent reads mail
-        through the Exchange MCP tools instead of the embedded fixture."""
+        through the Exchange MCP tools instead of the embedded fixture. Pass
+        include_skill=False when the skill is attached via the Skills API
+        (Managed Agents) so it is not duplicated in the prompt."""
         head = (
             f"{self.persona}\n\n"
             f"Today's date is {config.today().isoformat()} and the current time is "
@@ -73,8 +83,11 @@ class EmailAgent(Subagent):
             "You answer briefs from Regina, the orchestrator. Reply with the JSON "
             "output contract followed by a short markdown briefing; no preamble, "
             "no questions back.\n\n"
-            "# The email-brief skill\n\n" + _skill_body() + "\n\n"
         )
+        if include_skill:
+            head += "# The email-brief skill\n\n" + _skill_body() + "\n\n"
+        else:
+            head += "# The email-brief skill\n\nAttached as a skill; load and follow it exactly.\n\n"
         if live_mcp:
             return head + (
                 "# Your data\n\nUse the Exchange MCP tools named in the skill "
@@ -151,8 +164,12 @@ class EmailAgent(Subagent):
             deadline = bool(URGENCY_KEYWORDS.search(text))
             vip = bool(VIP_LABELS & set(e["labels"]))
             in_window = e["received_minutes_ago"] <= WINDOW_HOURS * 60
+            bulk = bool(BULK_LABELS & set(e["labels"])) or bool(BULK_SENDERS.match(e["from_email"]))
             if e["flagged"] or (e["importance"] == "high" and to_me) or (e["unread"] and e["focused"] and to_me and ask):
                 tier = "A"
+            elif bulk:
+                # Newsletters / no-reply senders are Tier C per the skill, even when unread.
+                tier = "C"
             elif e["unread"] or e["focused"] or vip or e["needs_reply"]:
                 tier = "B"
             else:
@@ -189,7 +206,8 @@ class EmailAgent(Subagent):
             bullets.append("Nothing else in the last 24h needs your attention.")
 
         counts = self._counts()
-        generated_at = config.now().replace(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # config.now() is naive local time; convert instead of relabelling it as UTC.
+        generated_at = config.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         contract = {
             "generated_at": generated_at,
             "user": self.raw.get("mailbox_owner", "you"),

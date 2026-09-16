@@ -70,10 +70,11 @@ def main() -> None:
             metadata={**config.MANAGED_AGENTS_METADATA, "role": cls.key},
         )
         if cls.key == "email":
+            # The skill is attached via the Skills API, so keep it out of the prompt.
             kwargs["skills"] = [{"type": "custom", "skill_id": email_skill_id, "version": "latest"}]
+            kwargs["system"] = agent_obj.system_prompt(live_mcp=bool(mcp_servers), include_skill=False)
             if mcp_servers:
                 # Live inbox: read mail through the MCP instead of the embedded fixture.
-                kwargs["system"] = agent_obj.system_prompt(live_mcp=True)
                 kwargs["mcp_servers"] = mcp_servers
                 kwargs["tools"].append({"type": "mcp_toolset", "mcp_server_name": "exchange"})
         created = api.beta.agents.create(**kwargs)

@@ -96,7 +96,9 @@ class CalendarAgent(Subagent):
                 return "**Calendar Agent** — nothing else scheduled.", {"next": None}
             return f"**Calendar Agent** — next up: {self._render_event(e, base)}", {"next": e}
 
-        wants_agenda = re.search(r"\bschedule\b|\bagenda\b|\bcalendar\b|what(?:'s| is) on|\bevents\b|\bmeetings\b|\btimeline\b", low)
+        # "meetings"/"calendar" alone don't mean "give me the agenda": "any conflicts in my meetings?"
+        # must still return the conflicts view.
+        wants_agenda = re.search(r"\bschedule\b|\bagenda\b|what(?:'s| is) on|\bevents\b|\btimeline\b", low)
         if re.search(r"\btoday\b", low) and re.search(r"\btomorrow\b", low):
             return self._render_range(range(0, 2), base)
 
