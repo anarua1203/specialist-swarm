@@ -55,6 +55,8 @@ page paces the reveal (all delegations first, then replies) to keep the
 fan-out visible; timestamps are real. Markdown rendering loads `marked` from
 cdnjs and falls back to plain text offline.
 
+To put it on a URL (tunnel, Docker, or AWS App Runner), see [DEPLOY.md](DEPLOY.md).
+
 ## Modes
 
 | Mode | Orchestrator | Sub-agents | When |

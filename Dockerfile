@@ -7,8 +7,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Regina needs only these two; requirements.txt also carries the calendar
+# agent's M365/Google clients, which the web UI never imports.
+RUN pip install --no-cache-dir "anthropic>=1.6.0" "python-dotenv>=1.0.0"
 
 COPY regina/ regina/
 COPY mock_data/ mock_data/
