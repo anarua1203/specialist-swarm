@@ -1,5 +1,6 @@
-anthropic>=0.40.0
+anthropic>=1.6.0
 python-dotenv>=1.0.0
+pytest>=8.0.0
 
 # Calendar agent — M365
 msal>=1.28.0
