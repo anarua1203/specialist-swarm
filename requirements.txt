@@ -1,2 +1,10 @@
 anthropic>=0.40.0
 python-dotenv>=1.0.0
+
+# Calendar agent — M365
+msal>=1.28.0
+requests>=2.32.0
+
+# Calendar agent — Google
+google-auth>=2.29.0
+google-api-python-client>=2.126.0
