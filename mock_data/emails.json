@@ -1,0 +1,161 @@
+{
+  "_note": "Synthetic inbox for the Prompt Queens hackathon demo. Times are relative to 'now' so the demo always looks fresh.",
+  "mailbox_owner": "you",
+  "emails": [
+    {
+      "id": "em-001",
+      "from_name": "Priya Natarajan",
+      "from_email": "priya.natarajan@northwind-retail.example",
+      "subject": "Re: Proposal follow-up — revised SOW needed by Thursday",
+      "body": "Thanks for the call yesterday. Our steering committee meets Thursday morning, so we need the revised SOW with the phased pricing option before then. Can you confirm you can get it to us by Wednesday EOD?",
+      "received_minutes_ago": 95,
+      "unread": true,
+      "needs_reply": true,
+      "importance": "high",
+      "labels": [
+        "client",
+        "northwind",
+        "sales"
+      ],
+      "draft_reply": "Hi Priya — confirmed. You'll have the revised SOW with the phased pricing option by Wednesday EOD, ahead of Thursday's steering committee."
+    },
+    {
+      "id": "em-002",
+      "from_name": "Marcus Lee",
+      "from_email": "marcus.lee@company.example",
+      "subject": "Can we move our 1:1 to 3pm?",
+      "body": "Something came up at 11:30. Would 3pm work for you today instead? If not, tomorrow morning is open too.",
+      "received_minutes_ago": 55,
+      "unread": true,
+      "needs_reply": true,
+      "importance": "medium",
+      "labels": [
+        "manager",
+        "scheduling"
+      ],
+      "draft_reply": "3pm works — I've moved our 1:1. See you then."
+    },
+    {
+      "id": "em-003",
+      "from_name": "Sofia Ramirez",
+      "from_email": "sofia.ramirez@company.example",
+      "subject": "Pitch deck draft — please review section 3 (architecture)",
+      "body": "Draft is in the shared folder. Section 3 is the orchestrator diagram; I want to make sure it matches what you're building. Comments by 2pm would be amazing so I can finalize before the demo.",
+      "received_minutes_ago": 40,
+      "unread": true,
+      "needs_reply": true,
+      "importance": "high",
+      "labels": [
+        "team",
+        "hackathon",
+        "prompt-queens"
+      ],
+      "draft_reply": "On it — I'll leave comments on section 3 before 2pm so the diagram matches the orchestrator we're demoing."
+    },
+    {
+      "id": "em-004",
+      "from_name": "Basecamp Hackathon Organizers",
+      "from_email": "organizers@basecamp-hackathon.example",
+      "subject": "Demo schedule: Prompt Queens at 4:30pm (5 min + 2 min Q&A)",
+      "body": "Final demo order is attached. Prompt Queens presents at 4:30pm in the main room. Please have your laptop on the HDMI adapter by 4:25pm. Judging criteria: working demo, use of sub-agents, clarity of pitch.",
+      "received_minutes_ago": 180,
+      "unread": true,
+      "needs_reply": false,
+      "importance": "high",
+      "labels": [
+        "hackathon",
+        "logistics"
+      ]
+    },
+    {
+      "id": "em-005",
+      "from_name": "Developer Platform",
+      "from_email": "noreply@platform.example",
+      "subject": "Your Managed Agents multi-agent preview access is approved",
+      "body": "Good news: your workspace has been granted access to the multi-agent research preview. You can now create coordinator agents with a roster of sub-agents.",
+      "received_minutes_ago": 300,
+      "unread": true,
+      "needs_reply": false,
+      "importance": "medium",
+      "labels": [
+        "platform",
+        "notifications"
+      ]
+    },
+    {
+      "id": "em-006",
+      "from_name": "GitHub",
+      "from_email": "notifications@github.example",
+      "subject": "[specialist-swarm] Review requested: PR #12 'Add calendar subagent fixtures'",
+      "body": "Sofia Ramirez requested your review on pull request #12.",
+      "received_minutes_ago": 360,
+      "unread": false,
+      "needs_reply": false,
+      "importance": "low",
+      "labels": [
+        "github",
+        "code-review"
+      ]
+    },
+    {
+      "id": "em-007",
+      "from_name": "Dana Whitfield",
+      "from_email": "dana.whitfield@acme-corp.example",
+      "subject": "Contract renewal — two pricing questions before Friday",
+      "body": "Before we sign the renewal we have two questions: (1) does the Enterprise tier include the new agent features, and (2) can the payment terms be net-45 instead of net-30? Happy to jump on a call tomorrow.",
+      "received_minutes_ago": 1500,
+      "unread": false,
+      "needs_reply": true,
+      "importance": "high",
+      "labels": [
+        "client",
+        "acme",
+        "renewal"
+      ],
+      "draft_reply": "Hi Dana — (1) yes, Enterprise includes the new agent features; (2) net-45 is doable for the renewal. Let's cover both on tomorrow's 3pm call."
+    },
+    {
+      "id": "em-008",
+      "from_name": "Finance Team",
+      "from_email": "finance@company.example",
+      "subject": "Reminder: September expense reports due Friday",
+      "body": "Please submit all September expenses by Friday 5pm. Late submissions roll to next month.",
+      "received_minutes_ago": 1620,
+      "unread": false,
+      "needs_reply": false,
+      "importance": "low",
+      "labels": [
+        "admin",
+        "deadline"
+      ]
+    },
+    {
+      "id": "em-009",
+      "from_name": "AI Weekly Digest",
+      "from_email": "digest@ai-weekly.example",
+      "subject": "This week in AI: agents, agents, agents",
+      "body": "Our roundup of the week's biggest agent launches and research papers.",
+      "received_minutes_ago": 720,
+      "unread": true,
+      "needs_reply": false,
+      "importance": "low",
+      "labels": [
+        "newsletter"
+      ]
+    },
+    {
+      "id": "em-010",
+      "from_name": "Dr. Okafor's Dental",
+      "from_email": "appointments@okafor-dental.example",
+      "subject": "Appointment reminder: Friday 8:30am",
+      "body": "This is a reminder of your cleaning appointment on Friday at 8:30am. Reply C to confirm.",
+      "received_minutes_ago": 2000,
+      "unread": false,
+      "needs_reply": false,
+      "importance": "low",
+      "labels": [
+        "personal"
+      ]
+    }
+  ]
+}

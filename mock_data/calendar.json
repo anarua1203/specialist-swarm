@@ -1,0 +1,164 @@
+{
+  "_note": "Synthetic calendar for the Prompt Queens hackathon demo. day_offset is relative to today (0 = today, 1 = tomorrow). Times are 24h local.",
+  "timezone": "local",
+  "working_hours": {
+    "start": "09:00",
+    "end": "18:00"
+  },
+  "events": [
+    {
+      "id": "cal-001",
+      "title": "Team standup",
+      "day_offset": 0,
+      "start": "09:00",
+      "end": "09:15",
+      "type": "meeting",
+      "location": "Zoom",
+      "attendees": [
+        "Marcus Lee",
+        "Sofia Ramirez",
+        "Jamal Carter"
+      ],
+      "notes": "Daily sync."
+    },
+    {
+      "id": "cal-002",
+      "title": "Hackathon build block — Regina orchestrator",
+      "day_offset": 0,
+      "start": "09:30",
+      "end": "11:30",
+      "type": "focus",
+      "location": "Main room, table 4",
+      "attendees": [],
+      "notes": "Heads-down. Orchestrator + subagent wiring."
+    },
+    {
+      "id": "cal-003",
+      "title": "1:1 with Marcus Lee",
+      "day_offset": 0,
+      "start": "11:30",
+      "end": "12:00",
+      "type": "meeting",
+      "location": "Zoom",
+      "attendees": [
+        "Marcus Lee"
+      ],
+      "notes": "Marcus asked by email to move this to 3pm."
+    },
+    {
+      "id": "cal-004",
+      "title": "Client sync: Northwind Retail proposal",
+      "day_offset": 0,
+      "start": "13:00",
+      "end": "14:00",
+      "type": "meeting",
+      "location": "Google Meet",
+      "attendees": [
+        "Priya Natarajan",
+        "Marcus Lee"
+      ],
+      "notes": "Walk through phased pricing option for the revised SOW."
+    },
+    {
+      "id": "cal-005",
+      "title": "Design review: dashboard v2",
+      "day_offset": 0,
+      "start": "13:30",
+      "end": "14:15",
+      "type": "meeting",
+      "location": "Room B",
+      "attendees": [
+        "Sofia Ramirez",
+        "Jamal Carter",
+        "Lena Fischer"
+      ],
+      "notes": "Overlaps with the Northwind client sync."
+    },
+    {
+      "id": "cal-006",
+      "title": "Prompt Queens — demo slot",
+      "day_offset": 0,
+      "start": "16:30",
+      "end": "16:37",
+      "type": "milestone",
+      "location": "Main room stage",
+      "attendees": [
+        "Sofia Ramirez",
+        "Jamal Carter"
+      ],
+      "notes": "5 min demo + 2 min Q&A. Laptop on HDMI by 4:25pm."
+    },
+    {
+      "id": "cal-010",
+      "title": "Northwind SOW due (steering committee Thursday AM)",
+      "day_offset": 0,
+      "start": "17:00",
+      "end": "17:00",
+      "type": "deadline",
+      "location": "",
+      "attendees": [],
+      "notes": "Revised SOW with phased pricing must be sent to Priya by EOD today."
+    },
+    {
+      "id": "cal-007",
+      "title": "Gym",
+      "day_offset": 0,
+      "start": "18:30",
+      "end": "19:30",
+      "type": "personal",
+      "location": "",
+      "attendees": [],
+      "notes": ""
+    },
+    {
+      "id": "cal-008",
+      "title": "Team standup",
+      "day_offset": 1,
+      "start": "09:00",
+      "end": "09:15",
+      "type": "meeting",
+      "location": "Zoom",
+      "attendees": [
+        "Marcus Lee",
+        "Sofia Ramirez",
+        "Jamal Carter"
+      ],
+      "notes": "Daily sync."
+    },
+    {
+      "id": "cal-009",
+      "title": "Acme Corp renewal call",
+      "day_offset": 1,
+      "start": "15:00",
+      "end": "15:30",
+      "type": "meeting",
+      "location": "Google Meet",
+      "attendees": [
+        "Dana Whitfield"
+      ],
+      "notes": "Answer the two pricing questions from Dana's email."
+    },
+    {
+      "id": "cal-011",
+      "title": "Dentist — cleaning",
+      "day_offset": 2,
+      "start": "08:30",
+      "end": "09:15",
+      "type": "personal",
+      "location": "Dr. Okafor's Dental",
+      "attendees": [],
+      "notes": ""
+    },
+    {
+      "id": "cal-012",
+      "title": "Expense reports due",
+      "day_offset": 2,
+      "start": "17:00",
+      "end": "17:00",
+      "type": "deadline",
+      "location": "",
+      "attendees": [],
+      "notes": "September expenses to Finance."
+    }
+  ]
+}

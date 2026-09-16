@@ -1,83 +1,149 @@
-# Option 3 — Specialist Swarm
+# 👑 Regina — the Prompt Queens personal assistant
 
-**Concept landed:** Skills, plugins & sub-agents
-**Tech:** [Claude Managed Agents multi-agent](https://platform.claude.com/docs/en/managed-agents/multi-agent) + [custom Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) + the pre-built [docx skill](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart)
-**Time:** 60 minutes
-**Output:** A coordinator agent that fans work out to 3-5 specialist sub-agents, each with its own skills, that assemble a real branded Word document.
+Regina is an **orchestrator agent**. She never reads your inbox, your calendar,
+or the news herself; she delegates to three specialist sub-agents, fans the
+work out in parallel, and synthesises one answer.
 
-## The pitch
+```
+                       ┌────────────────────────┐
+   "What's on my       │        Regina          │   morning briefing
+    plate today?" ───▶ │   orchestrator (Opus 5)│ ─▶ or a chat answer
+                       └───┬────────┬───────┬───┘
+              parallel     │        │       │
+                 ┌─────────▼─┐ ┌────▼─────┐ ┌▼──────────────────┐
+                 │Email Agent│ │ Calendar │ │ Anthropic News    │
+                 │ (inbox)   │ │  Agent   │ │ Agent             │
+                 └───────────┘ └──────────┘ └───────────────────┘
+                   mock_data/emails.json  calendar.json  anthropic_news.json
+```
 
-This is the architecture that wins the next $50M transformation deal: **coordinator + specialists + skills**. It maps directly to how every services firm structures real work. A senior partner orchestrates; specialists (legal, pricing, technical) own their lanes; the senior partner synthesises and delivers.
+The sub-agents are treated as **already built and working**: each is a black
+box that takes a natural-language brief and returns a report. For the demo
+they run over synthetic fixtures in `mock_data/`; swapping in real Gmail,
+Google Calendar, or an RSS feed only touches `regina/subagents/*.py`.
 
-You're going to build exactly that, in 60 minutes, around a Deal Desk scenario. Drop an RFP in, get a branded response doc out, watch the parallelism happen in real time on the events stream.
-
-## Setup (5 min)
-
-You need a workspace API key on the Console (multi-agent is currently in research preview — your workspace may need to be granted access).
+## Quick start (60 seconds, no API key needed)
 
 ```bash
-cd 03-specialist-swarm
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY="sk-ant-..."
+uv venv && uv pip install -r requirements.txt     # or: pip install -r requirements.txt
+python regina_briefing.py --mock                  # morning briefing, offline
+python regina_chat.py --mock                      # interactive chat, offline
 ```
 
-## Pick a scenario card
+With an API key (`cp .env.example .env`, set `ANTHROPIC_API_KEY`), drop the
+`--mock` flag: Regina runs on Claude Opus 5 and decides for herself which
+agents to call.
 
-Three cards in [`scenario-cards.md`](./scenario-cards.md). Each gives you a coordinator + a different roster of specialists. Pick one. Different teams should pick different cards.
+```bash
+python regina_briefing.py                         # live briefing
+python regina_chat.py --ask "Any conflicts today?"
+```
 
-## Core build (25 min)
+## Modes
 
-1. **Create the specialists.** Run `python create_specialists.py`. This creates 3-4 sub-agents (Pricing, Legal, Technical Fit, Competitive) and saves their IDs to `.specialist_ids.json`.
+| Mode | Orchestrator | Sub-agents | When |
+| --- | --- | --- | --- |
+| `mock` | deterministic router + template | deterministic over fixtures | no credentials, tests, offline demo |
+| `live` | Claude Opus 5, Messages API tool use | deterministic over fixtures (default) or `REGINA_SUBAGENTS=llm` for a Sonnet 5 call per agent | real demo |
+| Managed Agents | Claude Opus 5 coordinator with a roster | three Managed Agents built from the same classes | cloud demo with the platform event stream |
 
-2. **Create the coordinator.** Run `python create_coordinator.py`. This creates the coordinator agent with `multiagent: coordinator` config, listing the specialists in its callable roster.
+`REGINA_MODE=auto` (default) picks `live` when a key or an `ant auth login`
+profile exists, else `mock`. All knobs are in `.env.example`.
 
-3. **Upload the skills.** Run `python upload_skills.py`. This packages the custom skills in `skills/` and uploads them via the Skills API. Each specialist gets the skill that matches its domain.
-
-4. **Run the deal.** Run `python run_deal_desk.py`. This:
-   - Uploads the synthetic RFP (`synthetic-data/rfp-acme-corp.md`) as a file
-   - Starts a session against the coordinator
-   - Asks the coordinator to produce a full proposal response
-   - Streams the events so you can watch the parallel thread fan-out
-   - Saves the final docx to `outputs/proposal-response.docx`
-
-By minute 30 you have a Word document in `outputs/`, generated by a coordinator + specialists who each used their own skill.
-
-## Stretch goals (20 min)
-
-See [`stretch-goals.md`](./stretch-goals.md). The big ones:
-
-- **Custom firm-voice skill** — codify your own firm's voice (every services firm has one)
-- **Critic sub-agent** — add a fifth agent that reviews the coordinator's draft before it's finalised
-- **Memory across deals** — coordinator remembers past wins and re-uses the right ones
-- **Synthetic MCP for past wins** — wire up a fake CRM to the pricing specialist
-
-## Two-minute demo
-
-Two-monitor setup:
-- **Monitor 1:** the events stream from the coordinator session, scrolling. You'll see `session.thread_created` × 4, parallel `running`, then `agent.thread_message_received` flowing back. The visible parallelism IS the demo.
-- **Monitor 2:** open `outputs/proposal-response.docx`. Real document, branded, ready to send.
-
-Narrate the events stream while it runs. The room will get it.
-
-## What's in this folder
+## What the demo looks like
 
 ```
-03-specialist-swarm/
-├── README.md
-├── scenario-cards.md
-├── stretch-goals.md
-├── requirements.txt
-├── create_specialists.py          (creates the sub-agents)
-├── create_coordinator.py          (creates the coordinator)
-├── upload_skills.py               (uploads custom skills via Skills API)
-├── run_deal_desk.py               (runs the full swarm against an RFP)
-├── stretch_critic_subagent.py     (stretch: critic agent)
-├── skills/                        (custom skills, one per specialist)
-│   ├── pricing-playbook/SKILL.md
-│   ├── legal-checklist/SKILL.md
-│   └── competitive-intel/SKILL.md
-└── synthetic-data/
-    ├── rfp-acme-corp.md           (the RFP that triggers the swarm)
-    ├── past-wins.json             (used by pricing specialist)
-    └── product-overview.md        (used by technical specialist)
+   0.00s  [fan-out ×3]      Email Agent, Calendar Agent, Anthropic News Agent
+   0.00s  [delegate →]       Email Agent: "Give me an inbox digest: counts, every high-importance…"
+   0.00s  [delegate →]       Calendar Agent: "Give me today's full schedule with any conflicts…"
+   0.00s  [delegate →]       Anthropic News Agent: "Top 3 Anthropic announcements from the last 7…"
+   0.00s  [reply ←]          Calendar Agent (mock, 0 ms, 1180 chars)
+   0.00s  [reply ←]          Anthropic News Agent (mock, 0 ms, 1069 chars)
+   0.00s  [reply ←]          Email Agent (mock, 0 ms, 1919 chars)
+   0.00s  [synthesise]       Regina is writing the answer
+
+# Regina's briefing — Wednesday, September 16, 2026
+
+Your Majesty, Sofia Ramirez needs "Pitch deck draft" handled first, and you
+have a calendar conflict this afternoon.
+
+## Needs your attention
+- **Email** — Sofia Ramirez: "Pitch deck draft — please review section 3" (40m ago, needs a reply).
+- **Calendar** — CONFLICT 13:00–14:00 "Client sync: Northwind" overlaps "Design review" …
+...
 ```
+
+The trace goes to stderr, the briefing to stdout, and a copy lands in
+`outputs/briefing-<date>.md`.
+
+## Demo script (5 minutes)
+
+1. **Pitch (30s).** "Regina is the senior partner. She doesn't do the work,
+   she runs the people who do." Show the diagram above.
+2. **Briefing (90s).** `python regina_briefing.py`. Narrate the trace: three
+   delegations leave in the same instant, three replies come back, then one
+   synthesis. Point at the cross-references: Marcus's email vs the 11:30
+   1:1, the Northwind email vs the 13:00 client sync vs tomorrow's SOW deadline.
+3. **Chat (90s).** `python regina_chat.py`. Ask "Do I have any conflicts
+   today?" (one agent), then "Marcus wants to move our 1:1 to 3pm, does that
+   work?" (email + calendar), then "What did Anthropic ship about agents?"
+4. **Under the hood (60s).** Open `regina/subagents/email_agent.py`: a
+   sub-agent is one class with a persona, a fixture, and an `answer()`.
+   Adding a Slack agent is one file and one line in the roster.
+5. **Cloud (optional, 60s).** `python managed_agents/run_regina.py` and show
+   the platform session with three sub-agent threads.
+
+## Project layout
+
+```
+regina/
+  orchestrator.py        Regina: tool-use loop (live) or router + composer (mock), parallel fan-out
+  prompts.py             system prompt, roster description, canned briefs
+  config.py              env-driven settings (models, mode, pinned date)
+  trace.py               terminal trace of delegations
+  subagents/
+    base.py              Subagent: brief -> report; mock and llm backends; tool + system prompt
+    email_agent.py       Email Agent
+    calendar_agent.py    Calendar Agent (conflicts, free slots, deadlines)
+    news_agent.py        Anthropic News Agent
+mock_data/               synthetic inbox, calendar, news (relative dates, always "fresh")
+skills/regina-briefing/  SKILL.md — the briefing format, shared by local and Managed Agents
+managed_agents/          create_subagents / create_orchestrator / setup_environment / run_regina
+regina_briefing.py       CLI: morning briefing
+regina_chat.py           CLI: interactive chat
+tests/                   pytest, offline
+examples/deal-desk/      the original specialist-swarm baseline this was built from
+```
+
+## Managed Agents path
+
+Same roster, same prompts, but Anthropic runs the loop and each sub-agent is
+its own thread inside one session.
+
+```bash
+python managed_agents/create_subagents.py      # 3 agents, fixtures embedded in their system prompts
+python managed_agents/create_orchestrator.py   # Regina as coordinator + regina-briefing skill
+python managed_agents/setup_environment.py     # once per workspace
+python managed_agents/run_regina.py            # stream the session; thread_created × 3 is the money shot
+```
+
+Needs a workspace with the multi-agent research preview enabled.
+
+## Extending the roster
+
+1. Add `regina/subagents/slack_agent.py` subclassing `Subagent` with `key`,
+   `name`, `tool_name`, `persona`, `fixture_file`, and an `answer()`.
+2. Append it to `ROSTER` in `regina/subagents/__init__.py`.
+3. Mention it in `ROSTER_DESCRIPTION` in `regina/prompts.py`.
+
+The live orchestrator picks up the new tool automatically; the Managed Agents
+scripts create it on the next run.
+
+## Tests
+
+```bash
+python -m pytest -q
+```
+
+Tests pin `REGINA_TODAY=2026-09-16` so fixture offsets are reproducible and
+never touch the network.
