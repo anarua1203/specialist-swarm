@@ -1,0 +1,11 @@
+.env
+.environment_id
+.coordinator_id
+.specialist_ids.json
+.skill_ids.json
+.last_session_id
+outputs/
+excalidraw.log
+.venv/
+.call_intel_agent_id
+synthetic-data/pkf-engine-3-daily-sync-transcript.txt
