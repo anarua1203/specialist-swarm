@@ -12,9 +12,9 @@ def test_briefing_fans_out_to_all_three_agents_and_follows_skill_sections():
     regina = Regina(mode="mock", on_event=handler)
     text = regina.briefing()
     delegated = [p["agent"] for k, p in events if k == "delegate"]
-    assert sorted(delegated) == ["Anthropic News Agent", "Calendar Agent", "Email Agent"]
+    assert sorted(delegated) == ["Calendar Agent", "Email Agent", "News Agent"]
     assert [k for k, _ in events][0] == "fan_out"
-    for section in ["## Needs your attention", "## Today's schedule", "## Anthropic news worth 30 seconds", "## Suggested replies"]:
+    for section in ["## Needs your attention", "## Today's schedule", "## AI news worth 30 seconds", "## Suggested replies"]:
         assert section in text
     assert "Your Majesty" in text
     assert "CONFLICT" in text
@@ -28,6 +28,7 @@ def test_router_picks_the_right_agents():
     assert regina.route("Any emails I need to reply to?") == ["email"]
     assert regina.route("Do I have any conflicts today?") == ["calendar"]
     assert regina.route("What did Anthropic ship this week?") == ["news"]
+    assert regina.route("Any AI headlines about OpenAI?") == ["news"]
     assert regina.route("What's on my plate today?") == ["email", "calendar", "news"]
     assert regina.route("Marcus wants to move our 1:1 to 3pm, any email about it and is the slot free?") == ["email", "calendar"]
 
@@ -55,7 +56,7 @@ def test_compose_briefing_handles_empty_reports():
     replies = {
         "email": SubagentReply("Email Agent", "b", "", {"matched": [], "quiet": []}),
         "calendar": SubagentReply("Calendar Agent", "b", "", {"events": [], "conflicts": [], "free": [], "deadlines": []}),
-        "news": SubagentReply("Anthropic News Agent", "b", "", {"items": []}),
+        "news": SubagentReply("News Agent", "b", "", {"items": []}),
     }
     text = compose_briefing(replies)
     assert "A quiet day" in text

@@ -1,7 +1,7 @@
 """
 Regina — morning briefing.
 
-Fans out to the Email, Calendar and Anthropic News agents in parallel, prints
+Fans out to the Email, Calendar and News agents in parallel, prints
 the delegation trace (this is the demo), then the briefing. Saves a copy to
 outputs/briefing-<date>.md.
 

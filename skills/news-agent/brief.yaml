@@ -1,0 +1,24 @@
+relevance:
+  direct: 3        # watchlist entity or my employer named
+  adjacent: 2      # my stack, industry, or a competitor
+  domain: 1        # general AI news, no specific tie
+  suppress:
+    - funding rounds under $50M
+    - stock price movements
+    - executive drama with no policy or product consequence
+    - benchmark disputes between vendors
+ordering:
+  tier_weight: {T1: 5, T2: 3}
+  recency_bonus: {under_6h: 2, under_24h: 1}
+  max_per_entity: 2
+length:
+  full_items: 3
+  mention_items: 4
+  headline_max_words: 14
+  why_it_matters_max_words: 30
+  total_word_budget: 220
+  min_score_floor: 5
+verbosity_presets:
+  morning: {full_items: 3, mention_items: 4}
+  meeting_prep: {full_items: 2, mention_items: 0}
+  slack_reply: {full_items: 1, mention_items: 2}

@@ -86,15 +86,57 @@ def test_calendar_next_meeting_is_after_pinned_now():
     assert reply.data["next"]["id"] == "cal-003"  # 11:30 1:1, pinned now is 10:00
 
 
-def test_news_last_week_and_topic():
+def test_news_digest_follows_the_skill_contract():
     news = build_roster()["news"]
-    week = news.run("Top 3 Anthropic announcements from the last 7 days, each with a one-line 'why it matters' for someone building a multi-agent assistant.")
-    assert [i["id"] for i in week.data["items"]] == ["news-001", "news-002", "news-003"]
-    topical = news.run("What did Anthropic ship about agents?")
-    assert {i["id"] for i in topical.data["items"]} == {"news-002"}
-    month = news.run("everything from the last 30 days")
-    assert len(month.data["items"]) == 5  # default limit
-    assert news.run("anything in the last 0 days?").data["items"] == []
+    reply = news.run("Morning digest of AI news from the latest fetch, scored against the user's profile, as the news-agent JSON contract.")
+    env = reply.data
+    assert reply.text.startswith("```json") and reply.text.rstrip().endswith("```")  # JSON only, no prose
+    assert set(env) == {"generated_at", "preset", "lookback_hours", "items_considered", "items_returned", "quiet_period", "items"}
+    assert env["preset"] == "morning" and env["lookback_hours"] == 24
+    assert env["items_returned"] == len(env["items"]) <= 3 + 4  # full_items + mention_items
+    assert env["items_considered"] >= env["items_returned"]
+    fixture_urls = {i["url"] for i in news.raw["items"]}
+    for n, item in enumerate(env["items"]):
+        assert set(item) == {"headline", "why_it_matters", "tier", "relevance", "score", "event_date", "entities", "sources"}
+        assert item["tier"] in {"T1", "T2"} and item["relevance"] in {"direct", "adjacent", "domain"}
+        assert item["score"] >= news.brief_cfg["length"]["min_score_floor"]
+        assert item["entities"] and item["sources"] and all(s["url"] in fixture_urls for s in item["sources"])  # rule 1 & 2
+        assert len(item["headline"].split()) <= news.brief_cfg["length"]["headline_max_words"]
+        if n < 3:
+            assert item["why_it_matters"] and len(item["why_it_matters"].split()) <= news.brief_cfg["length"]["why_it_matters_max_words"]
+        else:
+            assert item["why_it_matters"] is None  # mention-only
+    scores = [i["score"] for i in env["items"]]
+    assert scores == sorted(scores, reverse=True)  # by score, never grouped by tier
+    assert news._words(env["items"]) <= news.brief_cfg["length"]["total_word_budget"]
+
+
+def test_news_presets_query_and_quiet_period():
+    news = build_roster()["news"]
+    prep = news.run("Prep me for the meeting: latest AI news").data
+    assert prep["preset"] == "meeting_prep" and prep["items_returned"] <= 2
+    assert all(i["why_it_matters"] for i in prep["items"])
+    slack = news.run("Anything for a Slack reply?").data
+    assert slack["preset"] == "slack_reply" and slack["items_returned"] <= 3
+    query = news.run("Everything about Anthropic from the last month").data
+    assert query["preset"] == "query:Anthropic" and query["lookback_hours"] == 720
+    assert query["items_returned"] >= 1
+    assert all("anthropic" in " ".join([i["headline"], *i["entities"], *(s["url"] for s in i["sources"])]).lower() for i in query["items"])
+    nothing = news.run("Everything about Zorbulon Dynamics").data
+    assert nothing["items"] == [] and nothing["quiet_period"] is True  # rule 4: never pad
+
+
+def test_news_pipeline_drops_t3_and_caps_per_entity():
+    news = build_roster()["news"]
+    items, reference = news.items_for(24)
+    ranked = news._pipeline(items, reference)
+    assert ranked and all(i["tier"] != "T3" for i in ranked)
+    cap = news.brief_cfg["ordering"]["max_per_entity"]
+    from collections import Counter
+    assert max(Counter(i["primary_entity"] for i in ranked).values()) <= cap
+    tiers = {i["title"]: i["tier"] for i in (news._tier(i) for i in items)}
+    assert any(t == "T3" for t in tiers.values())  # the fixture has tooling/commentary items that must be dropped
+
 
 
 def test_tool_definitions_are_strict_and_unique():
@@ -116,3 +158,6 @@ def test_system_prompt_embeds_fixture_or_points_at_mcp():
     attached = email.system_prompt(include_skill=False)  # Managed Agents: skill attached, not inlined
     assert "## Output contract" not in attached and '"em-001"' in attached
     assert "2026-09-16" in roster["calendar"].system_prompt()
+    news = roster["news"].system_prompt()
+    assert "## Hard Rules" in news and "profile.yaml" in news and '"publisher"' in news  # skill + config + fetch output
+    assert "## Hard Rules" not in roster["news"].system_prompt(include_skill=False)

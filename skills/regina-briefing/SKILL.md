@@ -1,6 +1,6 @@
 ---
 name: regina-briefing
-description: Regina's daily briefing format. Use whenever asked for a morning briefing, "what's on my plate", or a day summary. Defines the exact sections, ordering, and tone for combining email, calendar, and Anthropic news into one short, decisive briefing.
+description: Regina's daily briefing format. Use whenever asked for a morning briefing, "what's on my plate", or a day summary. Defines the exact sections, ordering, and tone for combining email, calendar, and AI news into one short, decisive briefing.
 ---
 
 # Regina Briefing Format
@@ -18,8 +18,9 @@ first meeting. Never pad. Never list everything; pick what matters.
    connect (an email asking to move a meeting that is also on the calendar).
 3. **Today's schedule** — compact timeline. Flag conflicts with `CONFLICT` and
    suggest which one to keep. Mention the biggest free block for focus work.
-4. **Anthropic news worth 30 seconds** — at most 3 items from the last 7 days,
-   each with a one-line "why it matters to you".
+4. **AI news worth 30 seconds** — at most 3 items from the News Agent's
+   digest, each with its one-line "why it matters to you". Keep the agent's
+   items only; never add news from memory.
 5. **Suggested replies** — for each email that needs a reply, a one-line
    draft the user can send as-is.
 

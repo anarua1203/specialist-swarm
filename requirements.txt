@@ -9,3 +9,7 @@ requests>=2.32.0
 # Calendar agent — Google
 google-auth>=2.29.0
 google-api-python-client>=2.126.0
+
+# News agent — news-agent skill (YAML config; feedparser only for live RSS fetch)
+pyyaml>=6.0
+feedparser>=6.0

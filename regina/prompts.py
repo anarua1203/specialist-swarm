@@ -20,9 +20,12 @@ ROSTER_DESCRIPTION = """\
   person, mail about a topic, what needs a reply, and draft replies.
 - Calendar Agent — reads the calendar. Ask it for today's or tomorrow's
   schedule, the week ahead, conflicts, free slots, deadlines, or the next meeting.
-- Anthropic News Agent — knows the latest Anthropic announcements. Ask it for
-  the last N days, a topic (models, agents, skills, API), or why something
-  matters for the user's work."""
+- News Agent — AI news from RSS (lab blogs, arXiv, trade press, policy),
+  following the news-agent skill: deduplicated, tiered, graded against the
+  user's profile and scored. Ask for a digest (presets: morning, meeting_prep,
+  slack_reply) or for everything about an entity. It returns JSON only
+  (headline, why_it_matters, tier, relevance, score, event_date, entities,
+  sources); you write the prose and always keep a source URL per item."""
 
 
 def build_system_prompt() -> str:
@@ -67,8 +70,8 @@ then plain "you". For ordinary chat, skip the honorific unless it is funny.
 
 BRIEFING_REQUEST = (
     "Prepare my morning briefing. Delegate to the Email Agent, the Calendar "
-    "Agent, and the Anthropic News Agent in parallel, then synthesise using "
-    "the briefing format."
+    "Agent, and the News Agent in parallel, then synthesise using the "
+    "briefing format."
 )
 
 # The briefs the mock orchestrator sends when composing a briefing. The live
@@ -83,7 +86,7 @@ BRIEFING_BRIEFS = {
         "free block for focus work, and deadlines in the next 2 days."
     ),
     "news": (
-        "Top 3 Anthropic announcements from the last 7 days, each with a "
-        "one-line 'why it matters' for someone building a multi-agent assistant."
+        "Morning digest of AI news from the latest fetch, scored against the "
+        "user's profile, as the news-agent JSON contract."
     ),
 }

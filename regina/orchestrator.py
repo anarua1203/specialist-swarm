@@ -2,7 +2,7 @@
 Regina — the orchestrator.
 
 Regina never reads data herself. She delegates to the roster (Email Agent,
-Calendar Agent, Anthropic News Agent), fans the delegations out in parallel,
+Calendar Agent, News Agent), fans the delegations out in parallel,
 and synthesises the reports.
 
 Two modes, same public API:
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Any, Callable
 
 from . import config
@@ -30,7 +30,7 @@ EventHandler = Callable[[str, dict[str, Any]], None]
 ROUTES = {
     "email": r"\b(email|emails|e-mail|inbox|mail|message|messages|reply|replies|respond|sent|unread|draft)\b",
     "calendar": r"\b(calendar|meeting|meetings|schedule|agenda|free|slot|slots|conflict|conflicts|deadline|deadlines|1:1|demo slot|busy|available)\b",
-    "news": r"\b(anthropic|news|announce|announced|announcement|announcements|claude|release|released|launch|launched|ship|shipped|model|models|api|skills|managed agents)\b",
+    "news": r"\b(anthropic|openai|deepmind|gemini|news|headlines|announce|announced|announcement|announcements|claude|release|released|launch|launched|ship|shipped|model|models|api|skills|managed agents|regulation|papers?|arxiv)\b",
 }
 # Time words alone point at the calendar only when nothing else matched
 # ("what did Anthropic ship this week" is news, "what's next?" is calendar).
@@ -209,7 +209,12 @@ def compose_briefing(replies: dict[str, SubagentReply]) -> str:
         s, f = max(free, key=lambda x: _span(x))
         free_line = f"\nBiggest free block: {s}–{f}."
 
-    news_lines = [f"- **{i['title']}** ({i['published_days_ago']}d ago) — {i['why_it_matters']}" for i in news.get("items", [])[:3]]
+    # The News Agent returns the news-agent skill's JSON contract; Regina writes the prose.
+    news_lines = []
+    for i in news.get("items", [])[:3]:
+        publisher = (i.get("sources") or [{}])[0].get("publisher", "")
+        why = f" — {i['why_it_matters']}" if i.get("why_it_matters") else ""
+        news_lines.append(f"- **{i['headline']}** ({publisher}, {_news_age(i.get('event_date'), today)}){why}")
     drafts = [f"- To {e['from_name']}: \"{e['draft_reply']}\"" for e in email.get("matched", []) if e.get("draft_reply")]
     quiet = email.get("quiet", [])
 
@@ -231,7 +236,7 @@ def compose_briefing(replies: dict[str, SubagentReply]) -> str:
         *(schedule or ["- Nothing on the calendar."]),
         free_line.strip(),
         "",
-        "## Anthropic news worth 30 seconds",
+        "## AI news worth 30 seconds",
         *(news_lines or ["- Nothing new this week."]),
         "",
         "## Suggested replies",
@@ -240,6 +245,17 @@ def compose_briefing(replies: dict[str, SubagentReply]) -> str:
     if quiet:
         lines += ["", f"Quiet noise: {len(quiet)} low-priority emails (newsletters, reminders) parked."]
     return "\n".join(line for line in lines if line is not None)
+
+
+def _news_age(event_date: str | None, today) -> str:
+    """'today' / 'yesterday' / 'Nd ago' from an ISO event_date, or 'undated'."""
+    if not event_date:
+        return "undated"
+    try:
+        days = (today - datetime.fromisoformat(event_date.replace("Z", "+00:00")).date()).days
+    except ValueError:
+        return "undated"
+    return "today" if days <= 0 else "yesterday" if days == 1 else f"{days}d ago"
 
 
 def _age(minutes: int) -> str:
