@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regina — Prompt Queens</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Markdown rendering. If the CDN is unreachable the page falls back to plain text. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f3ee;
+    --surface: #fffdf9;
+    --surface-2: #f0ebe3;
+    --ink: #1f1a24;
+    --ink-2: #5b5363;
+    --ink-3: #8d8594;
+    --line: #e2dbd0;
+    --royal: #4b2a6b;
+    --royal-soft: #efe7f6;
+    --gold: #b8860b;
+    --gold-soft: #fbf1d6;
+    --ok: #2f7d4f;
+    --ok-soft: #e3f3e8;
+    --err: #b3261e;
+    --shadow: 0 1px 2px rgb(31 26 36 / .06), 0 4px 16px rgb(31 26 36 / .05);
+    --serif: "Fraunces", Georgia, "Times New Roman", serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151219; --surface: #1d1922; --surface-2: #262130; --ink: #f1ecf5; --ink-2: #b9b0c2;
+      --ink-3: #847b8e; --line: #332c3d; --royal: #c7a6ea; --royal-soft: #2c2240; --gold: #e5b94b;
+      --gold-soft: #33290f; --ok: #6fcf97; --ok-soft: #173021; --err: #f2867d;
+      --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 4px 16px rgb(0 0 0 / .25);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+
+  /* ---- layout --------------------------------------------------------- */
+  .app { height: 100%; display: grid; grid-template-rows: auto 1fr; max-width: 1440px; margin: 0 auto; padding: 0 20px; }
+  header { display: flex; align-items: center; gap: 14px; padding: 18px 0 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .crest { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--royal-soft); border: 1px solid var(--line); }
+  .title h1 { margin: 0; font: 650 24px/1.1 var(--serif); letter-spacing: -.01em; }
+  .title p { margin: 2px 0 0; color: var(--ink-3); font-size: 13px; }
+  .spacer { flex: 1; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font: 500 12px var(--mono); border: 1px solid var(--line); background: var(--surface); }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+  .badge.live { border-color: var(--gold); background: var(--gold-soft); }
+  .badge.live .dot { background: var(--gold); animation: pulse 1.6s infinite; }
+  .ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; font-size: 13px; }
+  .ghost:hover:not(:disabled) { background: var(--surface-2); }
+
+  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; padding: 20px 0; min-height: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { margin: 0; font: 600 12px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+
+  /* ---- chat ------------------------------------------------------------ */
+  .messages { flex: 1; overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .welcome { margin: auto 0; text-align: center; color: var(--ink-2); padding: 24px; }
+  .welcome h3 { font: 500 26px/1.2 var(--serif); color: var(--ink); margin: 0 0 8px; }
+  .msg { max-width: 92%; }
+  .msg.user { align-self: flex-end; background: var(--royal); color: #fff; padding: 9px 14px; border-radius: 16px 16px 4px 16px; }
+  @media (prefers-color-scheme: dark) { .msg.user { color: #1d1922; } }
+  .msg.regina { align-self: flex-start; background: var(--surface-2); padding: 14px 18px; border-radius: 4px 16px 16px 16px; }
+  .msg.regina.pending { color: var(--ink-3); font-style: italic; }
+  .msg.error { background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err); }
+  .msg .meta { font: 12px var(--mono); color: var(--ink-3); margin-top: 10px; }
+  .md > :first-child { margin-top: 0; } .md > :last-child { margin-bottom: 0; }
+  .md h1 { font: 650 20px/1.25 var(--serif); margin: 0 0 10px; }
+  .md h2 { font: 600 13px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--royal); margin: 18px 0 6px; }
+  .md h3 { font-size: 15px; margin: 14px 0 4px; }
+  .md p { margin: 8px 0; } .md ul, .md ol { margin: 6px 0; padding-left: 20px; } .md li { margin: 3px 0; }
+  .md code { font: 13px var(--mono); background: var(--surface); padding: 1px 5px; border-radius: 4px; }
+  .md table { border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+  .md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+  .plain { white-space: pre-wrap; }
+
+  .composer { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: grid; gap: 10px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .chip { white-space: nowrap; border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--ink-2); }
+  .chip:hover:not(:disabled) { border-color: var(--royal); color: var(--royal); }
+  form { display: flex; gap: 8px; }
+  form input { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; outline: none; }
+  form input:focus { border-color: var(--royal); box-shadow: 0 0 0 3px var(--royal-soft); }
+  .primary { background: var(--royal); color: #fff; border: 0; border-radius: 10px; padding: 0 16px; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .primary { color: #1d1922; } }
+  .briefing-btn { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--ink); border-radius: 10px; padding: 0 14px; font-weight: 600; white-space: nowrap; }
+
+  /* ---- court: orchestrator + roster ----------------------------------- */
+  .court { padding: 22px 18px 18px; border-bottom: 1px solid var(--line); }
+  .queen { margin: 0 auto; width: fit-content; display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); transition: all .25s; }
+  .queen .role { font: 12px var(--mono); color: var(--ink-3); }
+  .queen strong { font: 600 16px var(--serif); }
+  .queen.active { border-color: var(--royal); box-shadow: 0 0 0 4px var(--royal-soft); }
+  .wires { height: 34px; position: relative; margin: 0 16.66%; }
+  .wires::before { content: ""; position: absolute; left: 50%; top: 0; height: 17px; border-left: 2px solid var(--line); }
+  .wires::after { content: ""; position: absolute; left: 0; right: 0; top: 17px; height: 17px; border: 2px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; }
+  .wires .mid { position: absolute; left: 50%; top: 17px; height: 17px; border-left: 2px solid var(--line); }
+  .court.busy .wires::before, .court.busy .wires::after, .court.busy .wires .mid { border-color: var(--royal); }
+  .agents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .agent { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg); transition: border-color .25s, box-shadow .25s, background .25s; position: relative; min-width: 0; }
+  .agent .icon { font-size: 20px; }
+  .agent .name { font-weight: 600; font-size: 14px; margin-top: 4px; }
+  .agent .status { font: 12px var(--mono); color: var(--ink-3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agent .brief { font-size: 12px; color: var(--ink-2); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 0; }
+  .agent.working { border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+  .agent.working .status { color: var(--gold); }
+  .agent.working .status::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); margin-right: 6px; animation: pulse 1s infinite; }
+  .agent.done { border-color: var(--ok); background: var(--ok-soft); }
+  .agent.done .status { color: var(--ok); }
+
+  /* ---- trace ----------------------------------------------------------- */
+  .trace { flex: 1; overflow-y: auto; padding: 12px 18px 18px; font: 12.5px/1.5 var(--mono); }
+  .trace .empty { color: var(--ink-3); font-family: var(--sans); font-size: 14px; padding: 12px 0; }
+  .run { padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .run:last-child { border-bottom: 0; }
+  .run-title { font: 600 13px var(--sans); color: var(--ink); margin-bottom: 6px; }
+  .line { display: grid; grid-template-columns: 52px 92px minmax(0, 1fr); gap: 8px; padding: 2px 0; animation: enter .25s ease-out; }
+  .line .t { color: var(--ink-3); text-align: right; }
+  .line .k { font-weight: 500; }
+  .line .d { color: var(--ink-2); overflow-wrap: anywhere; }
+  .k.fan_out { color: var(--royal); } .k.delegate { color: var(--gold); } .k.reply { color: var(--ok); }
+  .k.synthesize, .k.thinking, .k.answer { color: var(--royal); } .k.error { color: var(--err); }
+
+  @keyframes pulse { 50% { opacity: .35; } }
+  @keyframes enter { from { opacity: 0; transform: translateY(3px); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  @media (max-width: 900px) {
+    .app { height: auto; }
+    main { grid-template-columns: 1fr; }
+    .panel.chat { height: 78vh; }
+    .panel.court-panel { order: -1; }
+    .trace { max-height: 260px; }
+  }
+  @media (max-width: 520px) {
+    .agents { gap: 6px; } .agent { padding: 8px; } .agent .brief { display: none; }
+    .line { grid-template-columns: 44px 1fr; } .line .k { display: none; }
+    form { flex-wrap: wrap; } .briefing-btn { flex-basis: 100%; padding: 9px 14px; } .primary { padding: 10px 16px; }
+    header .spacer { flex-basis: 100%; height: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="crest" aria-hidden="true">👑</div>
+    <div class="title">
+      <h1>Regina</h1>
+      <p id="subtitle">Prompt Queens personal assistant</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="badge" id="mode"><span class="dot"></span><span id="mode-label">connecting…</span></span>
+    <button class="ghost" id="reset" title="Forget the conversation">Reset</button>
+  </header>
+
+  <main>
+    <section class="panel chat" aria-label="Conversation">
+      <div class="panel-head"><h2>Conversation</h2><span id="today" class="role" style="font-size:12px;color:var(--ink-3)"></span></div>
+      <div class="messages" id="messages" aria-live="polite">
+        <div class="welcome" id="welcome">
+          <h3>Good morning.</h3>
+          <div>Regina doesn't do the work. She runs the agents who do.<br>Ask a question, or start with the morning briefing.</div>
+        </div>
+      </div>
+      <div class="composer">
+        <div class="chips" id="chips"></div>
+        <form id="ask-form">
+          <button type="button" class="briefing-btn" id="briefing">☀️ Morning briefing</button>
+          <input id="question" autocomplete="off" placeholder="Ask Regina anything…" aria-label="Question">
+          <button class="primary" type="submit" id="send">Ask</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel court-panel" aria-label="Delegation">
+      <div class="panel-head"><h2>The court</h2><span style="font:12px var(--mono);color:var(--ink-3)" id="clock"></span></div>
+      <div class="court" id="court">
+        <div class="queen" id="queen">
+          <span style="font-size:20px">👑</span>
+          <div><strong>Regina</strong><div class="role" id="queen-role">orchestrator · idle</div></div>
+        </div>
+        <div class="wires" aria-hidden="true"><span class="mid"></span></div>
+        <div class="agents" id="agents"></div>
+      </div>
+      <div class="trace" id="trace"><div class="empty">Delegations appear here as Regina fans work out to her agents.</div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const ICONS = { email: "✉️", calendar: "📅", news: "📰" };
+  // Mock sub-agents answer in ~0 ms. Space out the reveal so the fan-out is visible.
+  // Purely cosmetic; live mode shows events at their real pace.
+  const MOCK_PACE = { fan_out: 250, delegate: 220, reply: 420, synthesize: 450, answer: 500 };
+
+  const $ = (id) => document.getElementById(id);
+  const state = { info: null, busy: false, cards: {}, runEl: null, started: 0, agentsUsed: new Set() };
+
+  // ---- setup --------------------------------------------------------------
+  fetch("/api/info").then((r) => r.json()).then((info) => {
+    state.info = info;
+    $("mode").classList.toggle("live", info.mode === "live");
+    $("mode-label").textContent = info.mode === "live" ? `live · ${info.model}` : "mock · offline";
+    $("today").textContent = info.today;
+    $("subtitle").textContent = `Prompt Queens personal assistant · serving ${info.user}`;
+    for (const a of info.roster) {
+      const el = document.createElement("div");
+      el.className = "agent";
+      el.innerHTML = `<div class="icon">${ICONS[a.key] || "🤖"}</div><div class="name"></div><div class="status">idle</div><div class="brief"></div>`;
+      el.querySelector(".name").textContent = a.name;
+      el.title = a.description;
+      $("agents").append(el);
+      state.cards[a.name] = el;
+    }
+    for (const s of info.suggestions) {
+      const chip = document.createElement("button");
+      chip.className = "chip"; chip.type = "button"; chip.textContent = s;
+      chip.onclick = () => ask(s);
+      $("chips").append(chip);
+    }
+  }).catch(() => { $("mode-label").textContent = "server unreachable"; });
+
+  $("ask-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = $("question").value.trim();
+    if (q) ask(q);
+  });
+  $("briefing").onclick = () => run("/api/briefing", "☀️ Morning briefing");
+  $("reset").onclick = async () => {
+    if (state.busy) return;
+    await fetch("/api/reset", { method: "POST" });
+    $("messages").innerHTML = "";
+    $("messages").append(welcomeEl());
+    $("trace").innerHTML = '<div class="empty">Conversation forgotten. Clean slate.</div>';
+    resetCourt();
+  };
+
+  function ask(q) {
+    $("question").value = "";
+    run(`/api/ask?q=${encodeURIComponent(q)}`, q);
+  }
+
+  // ---- a request: stream events, reveal them in order ------------------------
+  function run(url, label) {
+    if (state.busy) return;
+    setBusy(true);
+    $("welcome")?.remove();
+    addMessage("user", label);
+    const pending = addMessage("regina pending", "Regina is delegating…");
+    resetCourt();
+    startRun(label);
+
+    const queue = [];
+    let draining = false, finished = false;
+    const pace = state.info?.mode === "mock";
+
+    let awaitingDelegates = 0;
+    const next = () => {
+      // Mock agents finish in ~1 ms, so their events arrive as delegate→reply→delegate→reply.
+      // In mock mode, reveal every delegation of a fan-out before any reply, so the
+      // parallelism reads correctly. Timestamps are untouched.
+      if (pace && awaitingDelegates > 0 && queue[0].kind === "reply") {
+        const i = queue.findIndex((e) => e.kind === "delegate");
+        if (i > 0) return queue.splice(i, 1)[0];
+      }
+      return queue.shift();
+    };
+
+    const drain = async () => {
+      if (draining) return;
+      draining = true;
+      while (queue.length) {
+        const ev = next();
+        if (ev.kind === "fan_out") awaitingDelegates = ev.agents.length;
+        if (ev.kind === "delegate") awaitingDelegates = Math.max(0, awaitingDelegates - 1);
+        if (pace) await sleep(MOCK_PACE[ev.kind] || 150);
+        handle(ev, pending);
+      }
+      draining = false;
+    };
+
+    const source = new EventSource(url);
+    source.onmessage = (msg) => {
+      const ev = JSON.parse(msg.data);
+      if (ev.kind === "answer" || ev.kind === "error") { finished = true; source.close(); }
+      queue.push(ev);
+      drain();
+    };
+    // The server closes the stream after the answer; EventSource would reconnect
+    // (and re-run the request), so close it on any error.
+    source.onerror = () => {
+      source.close();
+      if (!finished) { queue.push({ kind: "error", message: "Lost connection to the server." }); drain(); }
+    };
+  }
+
+  function handle(ev, pending) {
+    const card = state.cards[ev.agent];
+    switch (ev.kind) {
+      case "thinking":
+        $("queen").classList.add("active");
+        $("queen-role").textContent = `orchestrator · planning (${ev.model})`;
+        traceLine(ev, "planning", `Regina is deciding who to call`);
+        break;
+      case "fan_out":
+        $("queen").classList.add("active");
+        $("court").classList.add("busy");
+        $("queen-role").textContent = `orchestrator · delegating ×${ev.agents.length}`;
+        traceLine(ev, `fan-out ×${ev.agents.length}`, ev.agents.join(", "));
+        pending.querySelector(".plain").textContent = `Regina is briefing ${ev.agents.join(", ")}…`;
+        break;
+      case "delegate":
+        if (card) {
+          card.className = "agent working";
+          card.querySelector(".status").textContent = "working";
+          card.querySelector(".brief").textContent = `“${ev.brief}”`;
+        }
+        state.agentsUsed.add(ev.agent);
+        traceLine(ev, "delegate →", `${ev.agent}: “${truncate(ev.brief, 110)}”`);
+        break;
+      case "reply":
+        if (card) {
+          card.className = "agent done";
+          card.querySelector(".status").textContent = `✓ ${Math.round(ev.elapsed_s * 1000)} ms · ${ev.chars} chars`;
+        }
+        traceLine(ev, "reply ←", `${ev.agent} (${ev.backend}, ${Math.round(ev.elapsed_s * 1000)} ms, ${ev.chars} chars)`);
+        break;
+      case "synthesize":
+        $("court").classList.remove("busy");
+        $("queen-role").textContent = "orchestrator · synthesising";
+        traceLine(ev, "synthesise", "Regina is writing the answer");
+        pending.querySelector(".plain").textContent = "Regina is writing the answer…";
+        break;
+      case "answer": {
+        traceLine(ev, "answer", `${ev.text.split(/\s+/).length} words`);
+        const agents = [...state.agentsUsed];
+        const answer = answerEl(ev.text, `via ${agents.join(", ") || "Regina"} · ${ev.t.toFixed(2)}s server time`);
+        pending.replaceWith(answer);
+        finish();
+        // Long answers (the briefing) should be read from the top, not the bottom.
+        answer.scrollIntoView({ block: "start", behavior: "smooth" });
+        return;
+      }
+      case "error":
+        traceLine(ev, "error", ev.message);
+        pending.className = "msg regina error";
+        pending.querySelector(".plain").textContent = ev.message;
+        finish();
+        break;
+    }
+    scrollDown();
+  }
+
+  function finish() {
+    $("queen").classList.remove("active");
+    $("court").classList.remove("busy");
+    $("queen-role").textContent = "orchestrator · idle";
+    setBusy(false);
+    $("question").focus();
+  }
+
+  // ---- DOM helpers ----------------------------------------------------------
+  function addMessage(cls, text) {
+    const el = document.createElement("div");
+    el.className = `msg ${cls}`;
+    const body = document.createElement("div");
+    body.className = "plain";
+    body.textContent = text;
+    el.append(body);
+    $("messages").append(el);
+    scrollDown();
+    return el;
+  }
+
+  function answerEl(markdown, meta) {
+    const el = document.createElement("div");
+    el.className = "msg regina";
+    const body = document.createElement("div");
+    if (window.marked && window.DOMPurify) {
+      body.className = "md";
+      body.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+    } else {
+      body.className = "plain";
+      body.textContent = markdown;
+    }
+    const m = document.createElement("div");
+    m.className = "meta";
+    m.textContent = meta;
+    el.append(body, m);
+    return el;
+  }
+
+  function welcomeEl() {
+    const el = document.createElement("div");
+    el.className = "welcome"; el.id = "welcome";
+    el.innerHTML = "<h3>Good morning.</h3><div>Regina doesn't do the work. She runs the agents who do.<br>Ask a question, or start with the morning briefing.</div>";
+    return el;
+  }
+
+  function startRun(label) {
+    $("trace").querySelector(".empty")?.remove();
+    const el = document.createElement("div");
+    el.className = "run";
+    const title = document.createElement("div");
+    title.className = "run-title";
+    title.textContent = label;
+    el.append(title);
+    $("trace").append(el);
+    state.runEl = el;
+    state.agentsUsed = new Set();
+  }
+
+  function traceLine(ev, kind, detail) {
+    const line = document.createElement("div");
+    line.className = "line";
+    const t = document.createElement("span"); t.className = "t"; t.textContent = ev.t != null ? `${ev.t.toFixed(2)}s` : "";
+    const k = document.createElement("span"); k.className = `k ${ev.kind}`; k.textContent = kind;
+    const d = document.createElement("span"); d.className = "d"; d.textContent = detail;
+    line.append(t, k, d);
+    state.runEl.append(line);
+    $("trace").scrollTop = $("trace").scrollHeight;
+  }
+
+  function resetCourt() {
+    for (const card of Object.values(state.cards)) {
+      card.className = "agent";
+      card.querySelector(".status").textContent = "idle";
+      card.querySelector(".brief").textContent = "";
+    }
+  }
+
+  function setBusy(busy) {
+    state.busy = busy;
+    for (const el of document.querySelectorAll("#chips button, #briefing, #send, #reset")) el.disabled = busy;
+    $("question").disabled = busy;
+  }
+
+  const scrollDown = () => { const m = $("messages"); m.scrollTop = m.scrollHeight; };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const truncate = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s).replace(/\s+/g, " ");
+})();
+</script>
+</body>
+</html>

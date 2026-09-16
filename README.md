@@ -39,6 +39,22 @@ python regina_briefing.py                         # live briefing
 python regina_chat.py --ask "Any conflicts today?"
 ```
 
+## Web UI (for the demo)
+
+```bash
+python regina_web.py --mock                       # offline → http://127.0.0.1:8000
+python regina_web.py                              # auto: live if credentials exist
+```
+
+One page, standard library only. Chat on the left; on the right, "the court":
+Regina plus the three agent cards, which light up as she delegates, and the same
+delegation trace the CLI prints, streamed live over Server-Sent Events. The
+header badge shows **mock · offline** or **live · <model>** so you always know
+whether API calls are happening. In mock mode the agents answer in ~1 ms, so the
+page paces the reveal (all delegations first, then replies) to keep the
+fan-out visible; timestamps are real. Markdown rendering loads `marked` from
+cdnjs and falls back to plain text offline.
+
 ## Modes
 
 | Mode | Orchestrator | Sub-agents | When |
@@ -111,6 +127,8 @@ skills/regina-briefing/  SKILL.md — the briefing format, shared by local and M
 managed_agents/          create_subagents / create_orchestrator / setup_environment / run_regina
 regina_briefing.py       CLI: morning briefing
 regina_chat.py           CLI: interactive chat
+regina_web.py            web UI: SSE server over the same Regina (serves web/index.html)
+web/index.html           the demo page: chat, agent cards, live delegation trace
 tests/                   pytest, offline
 examples/deal-desk/      the original specialist-swarm baseline this was built from
 ```
